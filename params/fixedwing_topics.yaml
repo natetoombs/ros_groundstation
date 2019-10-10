@@ -1,5 +1,5 @@
 stateSubChecked: true
-stateSubTopic: /fixedwing/state
+stateSubTopic: /fixedwing/truth
 
 gpsInitSubChecked: false
 gpsInitSubTopic: /fixedwing/state
