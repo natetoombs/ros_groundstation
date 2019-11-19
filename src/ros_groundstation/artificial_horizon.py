@@ -1,9 +1,7 @@
 import sys, math, rospy, random
-from PyQt5 import QtGui, QtCore, QtWidgets
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, Qt, QPointF,QRectF, QPoint
-from PyQt5.QtGui import QColor, QBrush, QPen, QFont, QPolygon
+from PyQt5 import QtCore, QtGui, QtWidgets
 from std_msgs.msg import Float32
-from .map_subscribers import *
+from map_subscribers import StateSub, GPSDataSub
 
 class ArtificialHorizon(QtWidgets.QWidget):
     def __init__(self):
@@ -72,38 +70,38 @@ class ArtificialHorizon(QtWidgets.QWidget):
         #self.drawWaypointAccuracy(event, painter)
 
     def drawNumSatellites(self, event, painter):
-        p1 = QPoint(0,0)
-        p2 = QPoint(self.width*(0.25),self.height*0.1)
-        rect = QRectF(p1,p2)
+        p1 = QtCore.QPoint(0,0)
+        p2 = QtCore.QPoint(self.width*(0.25),self.height*0.1)
+        rect = QtCore.QRectF(p1,p2)
         if self.numSat < 4:
-            painter.setPen(QPen(QBrush(Qt.red), 2, Qt.SolidLine))
+            painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.red), 2, QtCore.Qt.SolidLine))
         else:
-            painter.setPen(QPen(QBrush(Qt.green), 2, Qt.SolidLine))
+            painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.green), 2, QtCore.Qt.SolidLine))
         painter.drawText(rect,QtCore.Qt.AlignCenter,"GPS: " + str(self.numSat) + " satellites")
 
     #def drawWaypointAccuracy(self, event, painter):
-    #    p1 = QPoint(self.width*(0.65),0)
-    #    p2 = QPoint(self.width,self.height*0.1)
-    #    rect = QRectF(p1,p2)
+    #    p1 = QtCore.QPoint(self.width*(0.65),0)
+    #    p2 = QtCore.QPoint(self.width,self.height*0.1)
+    #    rect = QtCore.QRectF(p1,p2)
     #    painter.drawText(rect,QtCore.Qt.AlignCenter,"Wp Accuracy: " + "%.2f" % self.latestWpAccuracy + " m")
 
     def drawSky(self, event, painter):
         brush = QtGui.QBrush(QtGui.QColor(38, 89, 242), QtCore.Qt.SolidPattern)
-        painter.fillRect(QRectF(0,0,self.width, self.height), brush)
+        painter.fillRect(QtCore.QRectF(0,0,self.width, self.height), brush)
 
     def drawGround(self, event, painter):
         brush = QtGui.QBrush(QtGui.QColor(84, 54, 10), QtCore.Qt.SolidPattern)
-        painter.fillRect(QRectF(-300,self.height/2,self.width+600, self.height*(0.5+self.pitchInterval*180)), brush)
-        painter.setPen(QPen(QBrush(Qt.white), 2, Qt.SolidLine, Qt.RoundCap))
+        painter.fillRect(QtCore.QRectF(-300,self.height/2,self.width+600, self.height*(0.5+self.pitchInterval*180)), brush)
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.white), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
         painter.drawLine(-300,self.height/2,self.width+600,self.height/2)
 
 
     def drawHeadingIndicator(self, event, painter):
         boxWidth = self.width*1.0
         boxHeight = self.height*0.1
-        brush = QtGui.QBrush(QColor(100,100,100,200))
-        painter.setPen(QPen(QBrush(Qt.yellow), 2, Qt.SolidLine))
-        painter.fillRect(QRectF((self.width-boxWidth)/2,self.height-boxHeight,boxWidth,boxHeight),brush)
+        brush = QtGui.QBrush(QtGui.QColor(100,100,100,200))
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 2, QtCore.Qt.SolidLine))
+        painter.fillRect(QtCore.QRectF((self.width-boxWidth)/2,self.height-boxHeight,boxWidth,boxHeight),brush)
 
         directions = {0:"N",45:"NE",90:"E",135:"SE",180:"S",215:"SW",270:"W",315:"NW"}
         scale = 0.01
@@ -118,27 +116,27 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 if i in directions:
                     text = directions[i]
                 painter.drawLine(x,y,x,y+5)
-                painter.drawText(QPoint(x+7-8*len(text),y+22),text)
+                painter.drawText(QtCore.QPoint(x+7-8*len(text),y+22),text)
 
-        painter.setBrush(Qt.black)
-        p1 = QPoint(self.width*(0.46),self.height)
-        p2 = QPoint(self.width*(0.46),self.height - boxHeight*0.9)
-        p3 = QPoint(self.width*(0.50),self.height - boxHeight)
-        p4 = QPoint(self.width*(0.54),self.height - boxHeight*0.9)
-        p5 = QPoint(self.width*(0.54),self.height)
-        poly = QPolygon([p1,p2,p3,p4,p5])
-        painter.setPen(QPen(QBrush(QColor(0,0,0,0)), 2, Qt.SolidLine, Qt.RoundCap))
+        painter.setBrush(QtCore.Qt.black)
+        p1 = QtCore.QPoint(self.width*(0.46),self.height)
+        p2 = QtCore.QPoint(self.width*(0.46),self.height - boxHeight*0.9)
+        p3 = QtCore.QPoint(self.width*(0.50),self.height - boxHeight)
+        p4 = QtCore.QPoint(self.width*(0.54),self.height - boxHeight*0.9)
+        p5 = QtCore.QPoint(self.width*(0.54),self.height)
+        poly = QtGui.QPolygon([p1,p2,p3,p4,p5])
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0,0)), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
         painter.drawPolygon(poly)
-        painter.setPen(QPen(QBrush(QColor(255,255,0)), 2, Qt.SolidLine, Qt.RoundCap))
-        rect = QRectF(p1,p4)
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,0)), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
+        rect = QtCore.QRectF(p1,p4)
         painter.drawText(rect,QtCore.Qt.AlignCenter,str(self.heading) + u'\N{DEGREE SIGN}')
 
     def drawAirspeedIndicator(self, event, painter):
         boxWidth = self.width*0.13
         boxHeight = self.height*0.6
-        brush = QtGui.QBrush(QColor(100,100,100,200))
-        painter.setPen(QPen(QBrush(Qt.yellow), 2, Qt.SolidLine))
-        painter.fillRect(QRectF(0,(self.height-boxHeight)/2,boxWidth,boxHeight),brush)
+        brush = QtGui.QBrush(QtGui.QColor(100,100,100,200))
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 2, QtCore.Qt.SolidLine))
+        painter.fillRect(QtCore.QRectF(0,(self.height-boxHeight)/2,boxWidth,boxHeight),brush)
 
         scale = 0.01
         for i in range(self.speed-29,self.speed+29):
@@ -147,30 +145,30 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 y = self.height*0.5+((self.speed-i)*scale*self.height)
                 text = str(i)
                 painter.drawLine(x-5,y,x,y)
-                painter.drawText(QPoint(x-10-8*len(text),y+5),text)
+                painter.drawText(QtCore.QPoint(x-10-8*len(text),y+5),text)
 
-        painter.setBrush(Qt.black)
-        p1 = QPoint(0,self.height*(0.46))
-        p2 = QPoint(boxWidth*0.9,self.height*(0.46))
-        p3 = QPoint(boxWidth,self.height*(0.5))
-        p4 = QPoint(boxWidth*0.9,self.height*(0.54))
-        p5 = QPoint(0,self.height*(0.54))
-        poly = QPolygon([p1,p2,p3,p4,p5])
-        painter.setPen(QPen(QBrush(QColor(0,0,0,0)), 2, Qt.SolidLine, Qt.RoundCap))
+        painter.setBrush(QtCore.Qt.black)
+        p1 = QtCore.QPoint(0,self.height*(0.46))
+        p2 = QtCore.QPoint(boxWidth*0.9,self.height*(0.46))
+        p3 = QtCore.QPoint(boxWidth,self.height*(0.5))
+        p4 = QtCore.QPoint(boxWidth*0.9,self.height*(0.54))
+        p5 = QtCore.QPoint(0,self.height*(0.54))
+        poly = QtGui.QPolygon([p1,p2,p3,p4,p5])
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0,0)), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
         painter.drawPolygon(poly)
-        painter.setPen(QPen(QBrush(QColor(255,255,0)), 2, Qt.SolidLine, Qt.RoundCap))
-        rect = QRectF(p1,p4)
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,0)), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
+        rect = QtCore.QRectF(p1,p4)
         painter.drawText(rect,QtCore.Qt.AlignCenter,str(self.speed) + " kt")
-        painter.drawText(QPoint(5,(self.height-boxHeight)/2-5),"Airspeed (KIAS)")
+        painter.drawText(QtCore.QPoint(5,(self.height-boxHeight)/2-5),"Airspeed (KIAS)")
         # painter.drawText(rect,QtCore.Qt.AlignCenter,str(self.speed) + " m/s") # $$$$
-        # painter.drawText(QPoint(5,(self.height-boxHeight)/2-5),"Airspeed") # $$$$
+        # painter.drawText(QtCore.QPoint(5,(self.height-boxHeight)/2-5),"Airspeed") # $$$$
 
     def drawAltitudeIndicator(self, event, painter):
         boxWidth = self.width*0.13
         boxHeight = self.height*0.6
-        brush = QtGui.QBrush(QColor(100,100,100,200))
-        painter.setPen(QPen(QBrush(Qt.yellow), 2, Qt.SolidLine))
-        painter.fillRect(QRectF(self.width-boxWidth,(self.height-boxHeight)/2,boxWidth,boxHeight),brush)
+        brush = QtGui.QBrush(QtGui.QColor(100,100,100,200))
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 2, QtCore.Qt.SolidLine))
+        painter.fillRect(QtCore.QRectF(self.width-boxWidth,(self.height-boxHeight)/2,boxWidth,boxHeight),brush)
 
         scale = 0.01
         for i in range(self.altitude-29,self.altitude+29):
@@ -179,30 +177,30 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 y = self.height*0.5+((self.altitude-i)*scale*self.height)
                 text = str(i)
                 painter.drawLine(x,y,x+5,y)
-                painter.drawText(QPoint(x+10,y+5),text)
+                painter.drawText(QtCore.QPoint(x+10,y+5),text)
 
-        painter.setBrush(Qt.black)
-        p1 = QPoint(self.width,self.height*(0.46))
-        p2 = QPoint(self.width-boxWidth*0.9,self.height*(0.46))
-        p3 = QPoint(self.width-boxWidth,self.height*(0.5))
-        p4 = QPoint(self.width-boxWidth*0.9,self.height*(0.54))
-        p5 = QPoint(self.width,self.height*(0.54))
-        poly = QPolygon([p1,p2,p3,p4,p5])
-        painter.setPen(QPen(QBrush(QColor(0,0,0,0)), 2, Qt.SolidLine))
+        painter.setBrush(QtCore.Qt.black)
+        p1 = QtCore.QPoint(self.width,self.height*(0.46))
+        p2 = QtCore.QPoint(self.width-boxWidth*0.9,self.height*(0.46))
+        p3 = QtCore.QPoint(self.width-boxWidth,self.height*(0.5))
+        p4 = QtCore.QPoint(self.width-boxWidth*0.9,self.height*(0.54))
+        p5 = QtCore.QPoint(self.width,self.height*(0.54))
+        poly = QtGui.QPolygon([p1,p2,p3,p4,p5])
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0,0)), 2, QtCore.Qt.SolidLine))
         painter.drawPolygon(poly)
-        painter.setPen(QPen(QBrush(QColor(255,255,0)), 2, Qt.SolidLine))
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,0)), 2, QtCore.Qt.SolidLine))
         text = str(self.altitude) + " ft"
-        rect = QRectF(p1,p4)
+        rect = QtCore.QRectF(p1,p4)
         painter.drawText(rect,QtCore.Qt.AlignCenter,text)
-        painter.drawText(QPoint(self.width-boxWidth+5,(self.height-boxHeight)/2-5),"Altitude")
+        painter.drawText(QtCore.QPoint(self.width-boxWidth+5,(self.height-boxHeight)/2-5),"Altitude")
 
     def drawTurnIndicator(self, event, painter):
-        painter.setBrush(Qt.white)
-        painter.setPen(QPen(QBrush(Qt.white), 2, Qt.SolidLine, Qt.RoundCap))
+        painter.setBrush(QtCore.Qt.white)
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.white), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
         radius = self.width*(0.3)
         yOffset = self.height*(0.10)
         painter.drawArc(
-            QRectF(self.width*(0.5)-radius,yOffset, 2*radius, 2*radius),
+            QtCore.QRectF(self.width*(0.5)-radius,yOffset, 2*radius, 2*radius),
             16*30,16*120)
 
         height = self.height*0.02
@@ -223,7 +221,7 @@ class ArtificialHorizon(QtWidgets.QWidget):
 
             painter.drawLine(x,y,x2,y2)
             text = str(angle)
-            painter.drawText(QPoint(x3-4*len(text),y3),text)
+            painter.drawText(QtCore.QPoint(x3-4*len(text),y3),text)
 
             painter.translate(xCenter,yCenter)
             painter.rotate(-angle)
@@ -231,10 +229,10 @@ class ArtificialHorizon(QtWidgets.QWidget):
 
         # Draw the arrow
         height = self.height*0.025
-        poly = QPolygon([
-            QPoint(x,y),
-            QPoint(x-height/2,y+height),
-            QPoint(x+height/2,y+height),])
+        poly = QtGui.QPolygon([
+            QtCore.QPoint(x,y),
+            QtCore.QPoint(x-height/2,y+height),
+            QtCore.QPoint(x+height/2,y+height),])
 
         painter.translate(xCenter,yCenter)
         painter.rotate(self.roll)
@@ -251,13 +249,13 @@ class ArtificialHorizon(QtWidgets.QWidget):
         brightYellow = QtGui.QColor(255, 255, 0)
         widthFraction = 0.10
         heightFraction = 0.05
-        painter.setPen(QPen(QBrush(brightYellow), 5, Qt.SolidLine, Qt.RoundCap))
+        painter.setPen(QtGui.QPen(QtGui.QBrush(brightYellow), 5, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
         painter.setBrush(brightYellow)
-        poly = QPolygon([
-            QPoint(self.width*0.5, self.height*0.5),
-            QPoint(self.width*(0.5+widthFraction/2.0),self.height*(0.5+heightFraction)),
-            QPoint(self.width*0.5, self.height*(0.5+heightFraction/2.0)),
-            QPoint(self.width*(0.5-widthFraction/2.0),self.height*(0.5+heightFraction))
+        poly = QtGui.QPolygon([
+            QtCore.QPoint(self.width*0.5, self.height*0.5),
+            QtCore.QPoint(self.width*(0.5+widthFraction/2.0),self.height*(0.5+heightFraction)),
+            QtCore.QPoint(self.width*0.5, self.height*(0.5+heightFraction/2.0)),
+            QtCore.QPoint(self.width*(0.5-widthFraction/2.0),self.height*(0.5+heightFraction))
             ])
         painter.drawPolygon(poly)
         space = 0.25
@@ -276,8 +274,8 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 painter.drawLine(
                     self.width*(0.4),self.height*(height),
                     self.width*(0.6),self.height*(height))
-                painter.drawText(QPoint(self.width*(0.6)+5,self.height*(height)+5),text)
-                painter.drawText(QPoint(self.width*(0.4)-22,self.height*(height)+5),text)
+                painter.drawText(QtCore.QPoint(self.width*(0.6)+5,self.height*(height)+5),text)
+                painter.drawText(QtCore.QPoint(self.width*(0.4)-22,self.height*(height)+5),text)
 
             height = height - self.pitchInterval*5
             if height > minHeight and height < maxHeight:
