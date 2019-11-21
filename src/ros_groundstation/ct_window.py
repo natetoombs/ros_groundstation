@@ -1,11 +1,9 @@
 from python_qt_binding import loadUi
-from PyQt5.Qt import *
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QWidget
 QString = type("")
 
 import os, rospy
-
-from .map_subscribers import *
+from .map_subscribers import PPSub
 # from .Signals import AttentiveHandler
 
 PWD = os.path.dirname(os.path.abspath(__file__))
