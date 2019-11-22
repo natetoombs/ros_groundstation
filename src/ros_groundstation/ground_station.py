@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 from python_qt_binding import QT_BINDING
 from python_qt_binding.QtCore import qDebug, QTimer
@@ -38,7 +39,7 @@ class GroundStationWidget(QWidget):
         self._control_layout.addWidget(self._ah, 1)
         #=============================
 
-        print 'fake init'
+        print('fake init')
         self.setLayout(self._principle_layout)
 
         # Global timer for marble_map and artificial_horizon
@@ -53,7 +54,7 @@ class GroundStationWidget(QWidget):
         self.timer.stop()
 
     def save_settings(self, plugin_settings, instance_settings): # have a file to read and write from
-        print 'fake save' # < prints to terminal
+        print('fake save') # < prints to terminal
 
     def restore_settings(self, plugin_settings, instance_settings):
-        print 'fake restore'
+        print('fake restore')

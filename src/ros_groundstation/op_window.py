@@ -1,3 +1,4 @@
+from __future__ import print_function
 from python_qt_binding import loadUi
 from PyQt5.Qt import *
 from PyQt5.QtGui import *
@@ -215,9 +216,9 @@ class OpWindow(QWidget):
         checked = state_integer
         topic_name = str(self.NEDwGPS_wppub_textedit.toPlainText())
         if checked:
-            print 'functionality pending'
+            print('functionality pending')
         else:
-            print 'functionality pending'
+            print('functionality pending')
 
     def handle_gpssub_checkbox(self, state_integer):
         checked = state_integer
