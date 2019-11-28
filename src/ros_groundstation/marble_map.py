@@ -177,7 +177,7 @@ class MarbleMap(QWidget):
     def draw_grid(self, painter):
         painter.fillRect(QRect(0, self.GMP.height - 20, self.GMP.width, self.GMP.height), Qt.white)
         painter.fillRect(QRect(0, 0, 50, self.GMP.height - 20), Qt.white)
-        painter.setPen(QPen(QBrush(Qt.black), 1.5, Qt.SolidLine, Qt.RoundCap))
+        painter.setPen(QPen(QBrush(Qt.black), 1.5, Qt.DotLine, Qt.RoundCap))
         pixels_per_dist = self.grid_dist * 2**self.GMP.zoom / (156543.03392 * cos(radians(InitSub.init_latlonalt[0])))
 
         x_min, x_offset = divmod(GoogleMapPlotter.rel_lon_to_rel_pix(InitSub.init_latlonalt[1], self.GMP.west, self.GMP.zoom), pixels_per_dist)
