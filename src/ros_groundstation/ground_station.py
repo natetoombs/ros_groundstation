@@ -1,8 +1,8 @@
 from __future__ import print_function
 import argparse
 from python_qt_binding import QT_BINDING
-from python_qt_binding.QtCore import qDebug, QTimer
-from python_qt_binding.QtWidgets import QWidget, QBoxLayout, QVBoxLayout, QHBoxLayout, QPushButton
+from python_qt_binding.QtCore import qDebug, QTimer, Qt
+from python_qt_binding.QtWidgets import QWidget, QBoxLayout, QVBoxLayout, QHBoxLayout, QPushButton, QSplitter
 
 # Custom Widgets
 from .map_widget import MapWindow
@@ -16,10 +16,15 @@ class GroundStationWidget(QWidget):
         super(GroundStationWidget, self).__init__()
 
         self._principle_layout = QBoxLayout(0) # main layout is horizontal (0)
+        self._principle_layout = QSplitter(Qt.Horizontal)
         self._map_layout = QVBoxLayout()
-        self._principle_layout.addLayout(self._map_layout, 4)
+        map_widget = QWidget()
+        map_widget.setLayout(self._map_layout)
+        self._principle_layout.addWidget(map_widget)
         self._control_layout = QVBoxLayout()
-        self._principle_layout.addLayout(self._control_layout, 3)
+        control_widget = QWidget()
+        control_widget.setLayout(self._control_layout)
+        self._principle_layout.addWidget(control_widget);
 
         self.setAcceptDrops(False) # Dragging and Dropping not permitted
         self.setWindowTitle('ROSplane Ground Station')
@@ -40,7 +45,10 @@ class GroundStationWidget(QWidget):
         #=============================
 
         print('fake init')
-        self.setLayout(self._principle_layout)
+        total_layout = QBoxLayout(QBoxLayout.TopToBottom)
+        self._principle_layout.setHandleWidth(8)
+        total_layout.addWidget(self._principle_layout)
+        self.setLayout(total_layout)
 
         # Global timer for marble_map and artificial_horizon
         self.interval = 100     # in milliseconds, period of regular update
