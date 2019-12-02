@@ -2,16 +2,19 @@ from __future__ import print_function
 from python_qt_binding import loadUi
 from PyQt5.Qt import *
 from PyQt5.QtGui import *
+
 QString = type("")
 
 import os, rospy
 
 from .map_subscribers import *
+from .map_publishers import *
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 
+
 class OpWindow(QWidget):
-    def __init__(self, marble, uifname = 'op_window.ui'):
+    def __init__(self, marble, uifname='op_window.ui'):
         super(OpWindow, self).__init__()
         self.marble = marble
         ui_file = os.path.join(PWD, 'resources', uifname)
@@ -22,14 +25,14 @@ class OpWindow(QWidget):
         self.NEDwGPS_tab = QWidget()
         self.tab_widget.addTab(self.NEDwGPS_tab, QString('Principle Subscibers and Publishers'))
         description = 'All ROS information is exchanged with the plane in NED format, and the plane\n' + \
-            'may provide an initial GPS position for accurate latlong rendering.'
+                      'may provide an initial GPS position for accurate latlong rendering.'
         layout = QVBoxLayout()
         layout.addWidget(QLabel(QString(description)))
 
         label = 'GPS init Subscriber'
         checked = rospy.get_param('gpsInitSubChecked', True)
         topic = rospy.get_param('gpsInitSubTopic', '/state')
-        pubsub_layout = QBoxLayout(0) # for combining the checkbox and text field
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
         self.NEDwGPS_gisub_checkbox = QCheckBox(QString(label))
         self.NEDwGPS_gisub_checkbox.setChecked(checked)
         self.NEDwGPS_gisub_checkbox.stateChanged[int].connect(self.handle_gisub_checkbox)
@@ -42,7 +45,7 @@ class OpWindow(QWidget):
         label = 'State Subscriber'
         checked = rospy.get_param('stateSubChecked', True)
         topic = rospy.get_param('stateSubTopic', '/state')
-        pubsub_layout = QBoxLayout(0) # for combining the checkbox and text field
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
         self.NEDwGPS_statesub_checkbox = QCheckBox(QString(label))
         self.NEDwGPS_statesub_checkbox.setChecked(checked)
         self.NEDwGPS_statesub_checkbox.stateChanged[int].connect(self.handle_statesub_checkbox)
@@ -55,7 +58,7 @@ class OpWindow(QWidget):
         label = 'Path Subscriber'
         checked = rospy.get_param('pathSubChecked', True)
         topic = rospy.get_param('pathSubTopic', '/current_path')
-        pubsub_layout = QBoxLayout(0) # for combining the checkbox and text field
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
         self.NEDwGPS_pathsub_checkbox = QCheckBox(QString(label))
         self.NEDwGPS_pathsub_checkbox.setChecked(checked)
         self.NEDwGPS_pathsub_checkbox.stateChanged[int].connect(self.handle_pathsub_checkbox)
@@ -68,7 +71,7 @@ class OpWindow(QWidget):
         label = 'Waypoint Subscriber'
         checked = rospy.get_param('waypointSubChecked', True)
         topic = rospy.get_param('waypointSubTopic', '/waypoint_path')
-        pubsub_layout = QBoxLayout(0) # for combining the checkbox and text field
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
         self.NEDwGPS_wpsub_checkbox = QCheckBox(QString(label))
         self.NEDwGPS_wpsub_checkbox.setChecked(checked)
         self.NEDwGPS_wpsub_checkbox.stateChanged[int].connect(self.handle_wpsub_checkbox)
@@ -81,7 +84,7 @@ class OpWindow(QWidget):
         label = 'Waypoint Publisher'
         checked = rospy.get_param('waypointPubChecked', False)
         topic = rospy.get_param('waypointPubTopic', '/waypoint_path')
-        pubsub_layout = QBoxLayout(0) # for combining the checkbox and text field
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
         self.NEDwGPS_wppub_checkbox = QCheckBox(QString(label))
         self.NEDwGPS_wppub_checkbox.setChecked(checked)
         self.NEDwGPS_wppub_checkbox.stateChanged[int].connect(self.handle_wppub_checkbox)
@@ -124,6 +127,19 @@ class OpWindow(QWidget):
         self.MD_rcsub_channel.currentIndexChanged[str].connect(self.update_rc_channel)
         channel_layout.addWidget(self.MD_rcsub_channel)
         pubsub_layout.addLayout(channel_layout)
+        layout.addLayout(pubsub_layout)
+
+        label = 'Output Raw Subscriber'
+        checked = rospy.get_param('outputRawSubChecked', True)
+        topic = rospy.get_param('outputRawSubTopic', '/output_raw')
+        pubsub_layout = QBoxLayout(0)
+        self.MD_outputrawsub_checkbox = QCheckBox(QString(label))
+        self.MD_outputrawsub_checkbox.setChecked(checked)
+        self.MD_outputrawsub_checkbox.stateChanged[int].connect(self.handle_outputrawsub_checkbox)
+        pubsub_layout.addWidget(self.MD_outputrawsub_checkbox)
+        self.MD_outputrawsub_textedit = QTextEdit(QString(topic))
+        self.handle_outputrawsub_checkbox(checked)
+        pubsub_layout.addWidget(self.MD_outputrawsub_textedit)
         layout.addLayout(pubsub_layout)
 
         label = 'GPS Data Subscriber'
@@ -180,6 +196,50 @@ class OpWindow(QWidget):
 
         self.MD_tab.setLayout(layout)
 
+        self.waypoint_tab = QWidget()
+        self.tab_widget.addTab(self.waypoint_tab, QString('Waypoints'))
+        layout = QVBoxLayout()
+
+        label = 'Waypoint Altitiude (m)'
+        altitude = rospy.get_param('waypointAltitude', 50.) # default arbitrarily chosen
+        altitude_layout = QBoxLayout(0)
+        self.waypoint_altitude_label = QLabel(label)
+        altitude_layout.addWidget(self.waypoint_altitude_label)
+        self.waypoint_altitude_spinbox = QDoubleSpinBox()
+        self.waypoint_altitude_spinbox.setMinimum(0)
+        self.waypoint_altitude_spinbox.setMaximum(121)  # FAA max altitude
+        self.waypoint_altitude_spinbox.setValue(altitude)
+        altitude_layout.addWidget(self.waypoint_altitude_spinbox)
+        layout.addLayout(altitude_layout)
+        self.waypoint_altitude_spinbox.valueChanged.connect(self.handle_altitude_spinbox)
+        self.handle_altitude_spinbox()
+
+        label = 'Waypoint airspeed (m/s)'
+        airspeed = rospy.get_param('waypointAirspeed',15.) # default arbitrarily chosen
+        airspeed_layout = QBoxLayout(0)
+        self.waypoint_airspeed_label = QLabel(label)
+        airspeed_layout.addWidget(self.waypoint_airspeed_label)
+        self.waypoint_airspeed_spinbox = QDoubleSpinBox()
+        self.waypoint_airspeed_spinbox.setMinimum(0)
+        self.waypoint_airspeed_spinbox.setMaximum(30) #arbitrarily chosen
+        self.waypoint_airspeed_spinbox.setValue(airspeed)
+        airspeed_layout.addWidget(self.waypoint_airspeed_spinbox)
+        layout.addLayout(airspeed_layout)
+        self.waypoint_airspeed_spinbox.valueChanged.connect(self.handle_airspeed_spinbox)
+        self.handle_airspeed_spinbox()
+
+        layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+
+        self.waypoint_tab.setLayout(layout)
+
+    def handle_altitude_spinbox(self):
+        altitude = self.waypoint_altitude_spinbox.value()
+        PPPub.setDefaultAltitude(altitude)
+
+    def handle_airspeed_spinbox(self):
+        airspeed = self.waypoint_airspeed_spinbox.value()
+        PPPub.setDefaultAirspeed(airspeed)
+
     def handle_statesub_checkbox(self, state_integer):
         checked = state_integer
         topic_name = str(self.NEDwGPS_statesub_textedit.toPlainText())
@@ -216,9 +276,17 @@ class OpWindow(QWidget):
         checked = state_integer
         topic_name = str(self.NEDwGPS_wppub_textedit.toPlainText())
         if checked:
-            print('functionality pending')
+            PPPub.updatePPPubTopic(topic_name)
         else:
-            print('functionality pending')
+            PPPub.updatePPPubTopic(None)
+
+    def handle_outputrawsub_checkbox(self, state_integer):
+        checked = state_integer
+        topic_name = str(self.MD_outputrawsub_textedit.toPlainText())
+        if checked:
+            OutputRawSub.updateOutputRawTopic(topic_name)
+        else:
+            OutputRawSub.closeSubscriber()
 
     def handle_gpssub_checkbox(self, state_integer):
         checked = state_integer

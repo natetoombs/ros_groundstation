@@ -116,6 +116,7 @@ class ArtificialHorizon(QtWidgets.QWidget):
         self.drawAltitudeIndicator(event, painter)
         self.drawHeadingIndicator(event, painter)
         self.drawNumSatellites(event, painter)
+        self.drawOutputIndicator(event,painter)
         #self.drawWaypointAccuracy(event, painter)
 
     def drawNumSatellites(self, event, painter):
@@ -358,6 +359,41 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 painter.drawLine(
                     self.width*(0.45),self.height*(height),
                     self.width*(0.55),self.height*(height))
+
+    def drawOutputIndicator(self, event, painter):
+        """
+        Draws the altitude indicator.
+        """
+        return
+        boxWidth = self.width*0.13
+        boxHeight = self.height*0.6
+        brush = QtGui.QBrush(QtGui.QColor(100,100,100,200))
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 2, QtCore.Qt.SolidLine))
+        painter.fillRect(QtCore.QRectF(self.width-boxWidth,(self.height-boxHeight)/2,boxWidth,boxHeight),brush)
+
+        scale = 0.01
+        for i in range(self.altitude-29,self.altitude+29):
+            if i % 10 == 0:
+                x = self.width - boxWidth
+                y = self.height*0.5+((self.altitude-i)*scale*self.height)
+                text = str(i)
+                painter.drawLine(x,y,x+5,y)
+                painter.drawText(QtCore.QPoint(x+10,y+5),text)
+
+        painter.setBrush(QtCore.Qt.black)
+        p1 = QtCore.QPoint(self.width,self.height*(0.46))
+        p2 = QtCore.QPoint(self.width-boxWidth*0.9,self.height*(0.46))
+        p3 = QtCore.QPoint(self.width-boxWidth,self.height*(0.5))
+        p4 = QtCore.QPoint(self.width-boxWidth*0.9,self.height*(0.54))
+        p5 = QtCore.QPoint(self.width,self.height*(0.54))
+        poly = QtGui.QPolygon([p1,p2,p3,p4,p5])
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(0,0,0,0)), 2, QtCore.Qt.SolidLine))
+        painter.drawPolygon(poly)
+        painter.setPen(QtGui.QPen(QtGui.QBrush(QtGui.QColor(255,255,0)), 2, QtCore.Qt.SolidLine))
+        text = str(self.altitude) + " ft"
+        rect = QtCore.QRectF(p1,p4)
+        painter.drawText(rect,QtCore.Qt.AlignCenter,text)
+        painter.drawText(QtCore.QPoint(self.width-boxWidth+5,(self.height-boxHeight)/2-5),"Altitude")
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)

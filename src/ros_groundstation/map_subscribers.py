@@ -6,12 +6,13 @@ from Geo import Geobase
 from math import fmod, pi
 
 # custom messages
-from rosflight_msgs.msg import RCRaw
+from rosflight_msgs.msg import RCRaw, OutputRaw
 from inertial_sense.msg import GPS
 from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
+
 
 class InitSub():
     init_latlonalt = [0.0, 0.0, 0.0]
@@ -20,6 +21,7 @@ class InitSub():
     GB = None
     gps_init_topic = None
     gi_sub = None
+
     @staticmethod
     def updateInitLatLonAlt(new_init_latlonalt):
         print('taking latlonalt from marble')
@@ -35,7 +37,7 @@ class InitSub():
         InitSub.init_latlonalt[1] = state.longitude
         InitSub.init_latlonalt[2] = state.altitude
         InitSub.GB = Geobase(InitSub.init_latlonalt[0], InitSub.init_latlonalt[1])
-        InitSub.enabled = True # only perform the calculations if GPS init received
+        InitSub.enabled = True  # only perform the calculations if GPS init received
         InitSub.gi_sub.unregister()
 
     @staticmethod
@@ -63,6 +65,7 @@ class InitSub():
             InitSub.gi_sub.unregister()
             InitSub.gi_sub = None
 
+
 class MissionSub():
     enabled = False
     boundaries = []
@@ -71,6 +74,7 @@ class MissionSub():
     currentWaypoint = []
     mission_proxy = rospy.ServiceProxy('get_mission_with_id', GetMissionWithId)
     cwp_sub = None
+
     @staticmethod
     def getMission():
         MissionSub.cwp_sub = rospy.Subscriber('current_waypoint', UAVWaypoint, MissionSub.cwp_callback)
@@ -115,28 +119,29 @@ class MissionSub():
             lon = obstacle.point.longitude
             rad = obstacle.cylinder_radius
             N, E, D = InitSub.GB.gps_to_ned(lat, lon)
-            lat_ul, lon_ul, alt_ul = InitSub.GB.ned_to_gps(N+rad,E-rad,D)
-            lat_lr, lon_lr, alt_lr = InitSub.GB.ned_to_gps(N-rad,E+rad,D)
+            lat_ul, lon_ul, alt_ul = InitSub.GB.ned_to_gps(N + rad, E - rad, D)
+            lat_lr, lon_lr, alt_lr = InitSub.GB.ned_to_gps(N - rad, E + rad, D)
             MissionSub.obstacles.append([lat_ul, lon_ul, lat_lr, lon_lr])
         MissionSub.enabled = True
 
     @staticmethod
     def cwp_callback(wp):
-        lat, lon, alt = InitSub.GB.ned_to_gps(wp.w[0],wp.w[1],wp.w[2])
+        lat, lon, alt = InitSub.GB.ned_to_gps(wp.w[0], wp.w[1], wp.w[2])
         MissionSub.currentWaypoint = [lat, lon, alt]
+
 
 # "POINTS AND PATHS" Subscriber
 class PPSub():
     enabled = False
-    land_wps = [[],[]]
+    land_wps = [[], []]
     landing_wps = []
     landing_approved = False
     path_wps = []
     path_approved = False
     payload_wps = []
     payload_approved = False
-    search_wps = []
-    search_approved = False
+    seaoutput_rawh_wps = []
+    seaoutput_rawh_approved = False
     mission_type = 0
     clear_proxy = rospy.ServiceProxy('clear_wpts', UploadPath)
     approval_proxy = rospy.ServiceProxy('approved_path', UploadPath)
@@ -161,13 +166,13 @@ class PPSub():
 
     @staticmethod
     def resetLandingWaypoints():
-        PPSub.land_wps = [[],[]]
+        PPSub.land_wps = [[], []]
 
     @staticmethod
     def clearAllWaypoints():
         PPSub.path_wps = []
         PPSub.landing_wps = []
-        PPSub.search_wps = []
+        PPSub.seaoutput_rawh_wps = []
         PPSub.payload_wps = []
         try:
             cleared = PPSub.clear_proxy()
@@ -183,9 +188,11 @@ class PPSub():
         try:
             if PPSub.mission_type == 4 and len(PPSub.land_wps[0]) > 0 and len(PPSub.land_wps[1]) > 0:
                 wp1 = NED_pt()
-                wp1.N, wp1.E, wp1.D = InitSub.GB.gps_to_ned(PPSub.land_wps[0][0], PPSub.land_wps[0][1], PPSub.land_wps[0][2])
+                wp1.N, wp1.E, wp1.D = InitSub.GB.gps_to_ned(PPSub.land_wps[0][0], PPSub.land_wps[0][1],
+                                                            PPSub.land_wps[0][2])
                 wp2 = NED_pt()
-                wp2.N, wp2.E, wp2.D = InitSub.GB.gps_to_ned(PPSub.land_wps[1][0], PPSub.land_wps[1][1], PPSub.land_wps[1][2])
+                wp2.N, wp2.E, wp2.D = InitSub.GB.gps_to_ned(PPSub.land_wps[1][0], PPSub.land_wps[1][1],
+                                                            PPSub.land_wps[1][2])
                 landingList = NED_list()
                 landingList.waypoint_list.append(wp1)
                 landingList.waypoint_list.append(wp2)
@@ -200,21 +207,21 @@ class PPSub():
                     lat, lon, alt = InitSub.GB.ned_to_gps(NED.N, NED.E, NED.D)
                     PPSub.path_wps.append([lat, lon])
             elif PPSub.mission_type == 2:
-                PPSub.search_approved = False
-                PPSub.search_wps = []
+                PPSub.seaoutput_rawh_approved = False
+                PPSub.seaoutput_rawh_wps = []
                 for NED in response.planned_waypoints.waypoint_list:
                     lat, lon, alt = InitSub.GB.ned_to_gps(NED.N, NED.E, NED.D)
-                    PPSub.search_wps.append([lat, lon])
+                    PPSub.seaoutput_rawh_wps.append([lat, lon])
                 if len(PPSub.path_wps) > 0:
-                    PPSub.search_wps.insert(0, PPSub.path_wps[-1])
+                    PPSub.seaoutput_rawh_wps.insert(0, PPSub.path_wps[-1])
             elif PPSub.mission_type == 1:
                 PPSub.payload_approved = False
                 PPSub.payload_wps = []
                 for NED in response.planned_waypoints.waypoint_list:
                     lat, lon, alt = InitSub.GB.ned_to_gps(NED.N, NED.E, NED.D)
                     PPSub.payload_wps.append([lat, lon])
-                if len(PPSub.search_wps) > 0:
-                    PPSub.payload_wps.insert(0, PPSub.search_wps[-1])
+                if len(PPSub.seaoutput_rawh_wps) > 0:
+                    PPSub.payload_wps.insert(0, PPSub.seaoutput_rawh_wps[-1])
                 elif len(PPSub.path_wps) > 0:
                     PPSub.payload_wps.insert(0, PPSub.path_wps[-1])
             elif PPSub.mission_type == 4:
@@ -225,8 +232,8 @@ class PPSub():
                     PPSub.landing_wps.append([lat, lon])
                 if len(PPSub.payload_wps) > 0:
                     PPSub.landing_wps.insert(0, PPSub.payload_wps[-1])
-                elif len(PPSub.search_wps) > 0:
-                    PPSub.landing_wps.insert(0, PPSub.search_wps[-1])
+                elif len(PPSub.seaoutput_rawh_wps) > 0:
+                    PPSub.landing_wps.insert(0, PPSub.seaoutput_rawh_wps[-1])
                 elif len(PPSub.path_wps) > 0:
                     PPSub.landing_wps.insert(0, PPSub.path_wps[-1])
             PPSub.enabled = True
@@ -239,7 +246,7 @@ class PPSub():
         #     if PPSub.mission_type == 0:
         #         PPSub.path_approved = PPSub.approval_proxy()
         #     if PPSub.mission_type == 2:
-        #         PPSub.search_approved = PPSub.approval_proxy()
+        #         PPSub.seaoutput_rawh_approved = PPSub.approval_proxy()
         #     if PPSub.mission_type == 1:
         #         PPSub.payload_approved = PPSub.approval_proxy()
         #     if PPSub.mission_type == 4:
@@ -249,11 +256,12 @@ class PPSub():
         if PPSub.mission_type == 0:
             PPSub.path_approved = PPSub.approval_proxy()
         if PPSub.mission_type == 2:
-            PPSub.search_approved = PPSub.approval_proxy()
+            PPSub.seaoutput_rawh_approved = PPSub.approval_proxy()
         if PPSub.mission_type == 1:
             PPSub.payload_approved = PPSub.approval_proxy()
         if PPSub.mission_type == 4:
             PPSub.landing_approved = PPSub.approval_proxy()
+
 
 class StateSub():
     state_sub = None
@@ -287,8 +295,8 @@ class StateSub():
             e = state.position[1]
             d = state.position[2]
             StateSub.lat, StateSub.lon, StateSub.alt = InitSub.GB.ned_to_gps(n, e, d)
-            #StateSub.alt -= InitSub.init_latlonalt[2]
-            StateSub.chi = fmod(state.chi, 2*pi)
+            # StateSub.alt -= InitSub.init_latlonalt[2]
+            StateSub.chi = fmod(state.chi, 2 * pi)
             StateSub.Va = state.Va
             StateSub.phi = state.phi
             StateSub.theta = state.theta
@@ -314,32 +322,33 @@ class StateSub():
             StateSub.state_sub.unregister()
             StateSub.state_sub = None
 
+
 class RCSub():
-    rc_sub = None
-    rc_raw_topic = None
+    output_raw_sub = None
+    output_raw_topic = None
     autopilotEnabled = True
     channel = 6
 
     @staticmethod
-    def updateRCRawTopic(new_rc_raw_topic):
-        print('subscribing to', new_rc_raw_topic)
+    def updateRCRawTopic(new_output_raw_topic):
+        print('subscribing to', new_output_raw_topic)
         RCSub.reset()
-        RCSub.rc_raw_topic = new_rc_raw_topic
-        if not RCSub.rc_raw_topic is None:
-            RCSub.rc_sub = rospy.Subscriber(RCSub.rc_raw_topic, RCRaw, RCSub.rc_callback)
+        RCSub.output_raw_topic = new_output_raw_topic
+        if not RCSub.output_raw_topic is None:
+            RCSub.output_raw_sub = rospy.Subscriber(RCSub.output_raw_topic, RCRaw, RCSub.output_raw_callback)
 
     @staticmethod
     def getRCRawTopic():
-        return RCSub.rc_raw_topic
+        return RCSub.output_raw_topic
 
     @staticmethod
-    def updateRCChannel(new_rc_channel):
-        print('updating RC channel to', new_rc_channel)
-        RCSub.channel = new_rc_channel
+    def updateRCChannel(new_output_raw_channel):
+        print('updating RC channel to', new_output_raw_channel)
+        RCSub.channel = new_output_raw_channel
 
     @staticmethod
-    def rc_callback(rcRaw):
-        RCSub.autopilotEnabled = (rcRaw.values[RCSub.channel] < 950) # <<<<<
+    def output_raw_callback(output_rawRaw):
+        RCSub.autopilotEnabled = (output_rawRaw.values[RCSub.channel] < 950)  # <<<<<
 
     @staticmethod
     def closeSubscriber():
@@ -349,10 +358,11 @@ class RCSub():
     @staticmethod
     def reset():
         RCSub.autopilotEnabled = True
-        if not RCSub.rc_sub is None:
-            RCSub.rc_sub.unregister()
-            RCSub.rc_sub = None
+        if not RCSub.output_raw_sub is None:
+            RCSub.output_raw_sub.unregister()
+            RCSub.output_raw_sub = None
             RCSub.channel = 5
+
 
 class PathSub():
     path_sub = None
@@ -405,15 +415,17 @@ class PathSub():
             PathSub.path_sub.unregister()
             PathSub.path_sub = None
 
+
 class renderable_wp():
     def __init__(self, lat, lon, alt, chi_d, chi_valid, Va_d, converted=True):
         self.lat = lat
         self.lon = lon
         self.alt = alt
-        self.chi_d = chi_d # radians
+        self.chi_d = chi_d  # radians
         self.chi_valid = chi_valid
         self.Va_d = Va_d
         self.converted = converted
+
 
 class WaypointSub():
     wp_sub = None
@@ -444,7 +456,8 @@ class WaypointSub():
                     rwp.converted = True
             WaypointSub.enabled = True
         else:
-            WaypointSub.waypoints.append(renderable_wp(wp.w[0], wp.w[1], wp.w[2], wp.chi_d, wp.chi_valid, wp.Va_d, False))
+            WaypointSub.waypoints.append(
+                renderable_wp(wp.w[0], wp.w[1], wp.w[2], wp.chi_d, wp.chi_valid, wp.Va_d, False))
             WaypointSub.enabled = False
 
     @staticmethod
@@ -459,6 +472,7 @@ class WaypointSub():
         if not WaypointSub.wp_sub is None:
             WaypointSub.wp_sub.unregister()
             WaypointSub.wp_sub = None
+
 
 class ObstacleSub():
     obs_sub = None
@@ -482,8 +496,8 @@ class ObstacleSub():
     @staticmethod
     def json_callback(obstacles_json):
         json_data = str(obstacles_json.data)
-        json_data = re.sub(r"u'",r'"',json_data)
-        json_data = re.sub(r"'",r'"',json_data)
+        json_data = re.sub(r"u'", r'"', json_data)
+        json_data = re.sub(r"'", r'"', json_data)
         data = json.loads(json_data)
         moving_obstacles = data["moving_obstacles"]
         stationary_obstacles = data["stationary_obstacles"]
@@ -518,6 +532,7 @@ class ObstacleSub():
         if not ObstacleSub.obs_sub is None:
             ObstacleSub.obs_sub.unregister()
             ObstacleSub.obs_sub = None
+
 
 class GPSDataSub():
     gps_sub = None
@@ -555,6 +570,7 @@ class GPSDataSub():
             GPSDataSub.gps_sub.unregister()
             GPSDataSub.gps_sub = None
 
+
 class ConInSub():
     con_in_sub = None
     controller_inners_topic = None
@@ -568,7 +584,8 @@ class ConInSub():
         ConInSub.reset()
         ConInSub.controller_inners_topic = new_controller_inners_topic
         if not ConInSub.controller_inners_topic is None:
-            ConInSub.con_in_sub = rospy.Subscriber(ConInSub.controller_inners_topic, Controller_Internals, ConInSub.callback_ConIn)
+            ConInSub.con_in_sub = rospy.Subscriber(ConInSub.controller_inners_topic, Controller_Internals,
+                                                   ConInSub.callback_ConIn)
 
     @staticmethod
     def getConInTopic():
@@ -594,6 +611,7 @@ class ConInSub():
             ConInSub.con_in_sub.unregister()
             ConInSub.con_in_sub = None
 
+
 class ConComSub():
     con_com_sub = None
     controller_commands_topic = None
@@ -608,7 +626,8 @@ class ConComSub():
         ConComSub.reset()
         ConComSub.controller_commands_topic = new_controller_commands_topic
         if not ConComSub.controller_commands_topic is None:
-            ConComSub.con_com_sub = rospy.Subscriber(ConComSub.controller_commands_topic, Controller_Commands, ConComSub.callback_ConCom)
+            ConComSub.con_com_sub = rospy.Subscriber(ConComSub.controller_commands_topic, Controller_Commands,
+                                                     ConComSub.callback_ConCom)
 
     @staticmethod
     def getConComTopic():
@@ -635,3 +654,36 @@ class ConComSub():
         if not ConComSub.con_com_sub is None:
             ConComSub.con_com_sub.unregister()
             ConComSub.con_com_sub = None
+
+
+class OutputRawSub():
+    output_raw_sub = None
+    output_raw_topic = None
+    last_output = [0] * 14
+
+    @staticmethod
+    def updateOutputRawTopic(new_output_raw_topic):
+        print('subscribing to', new_output_raw_topic)
+        OutputRawSub.reset()
+        OutputRawSub.output_raw_topic = new_output_raw_topic
+        if not OutputRawSub.output_raw_topic is None:
+            OutputRawSub.output_raw_sub = rospy.Subscriber(OutputRawSub.output_raw_topic, OutputRaw, OutputRawSub.output_raw_callback)
+
+    @staticmethod
+    def getOutputRawTopic():
+        return OutputRawSub.output_raw_topic
+
+    @staticmethod
+    def output_raw_callback(output_raw):
+        OutputRawSub.last_output = output_raw.values;
+
+    @staticmethod
+    def closeSubscriber():
+        print('closing subscriber')
+        OutputRawSub.reset()
+
+    @staticmethod
+    def reset():
+        if not OutputRawSub.output_raw_sub is None:
+            OutputRawSub.output_raw_sub.unregister()
+            OutputRawSub.output_raw_sub = None
