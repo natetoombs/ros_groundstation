@@ -51,12 +51,10 @@ class MarbleMap(QWidget):
         self.grid_dist = 20  # meters
 
     def show_context_menu(self, point):
-        print("Context menu requested")
-        print(point)
         menu = QMenu(self)
         waypoint_action = menu.addAction("Add Waypoint")
         replace_action = menu.addAction("Replace all waypoints")
-        land_action = menu.addAction("Land here")
+        land_action = menu.addAction("Land here (TODO)")
         clear_action = menu.addAction("Clear all waypoints")
         choice = menu.exec_(self.mapToGlobal(point))
         clickX = point.x()
@@ -68,11 +66,10 @@ class MarbleMap(QWidget):
             self.add_waypoint(n, e, d)
         elif choice == replace_action:
             self.replace_waypoints(n, e, d)
-        elif choice== clear_action:
+        elif choice == clear_action:
             self.clear_waypoints()
-        elif choice==land_action:
-            pass # TODO
-
+        elif choice == land_action:
+            pass  # TODO
 
     def add_waypoint(self, n, e, d):
         PPPub.publishWaypointShort(n, e)
@@ -280,23 +277,25 @@ class MarbleMap(QWidget):
             if x >= 0 and x <= self.GMP.width and y >= 0 and y <= self.GMP.height:
                 painter.drawEllipse(x - 7.5, y - 7.5, 15, 15)
 
-    def draw_waypoints(self, painter):
-        # Draw first waypoint
-        painter.setPen(QPen(QBrush(Qt.blue), 3.0, Qt.SolidLine, Qt.RoundCap))
-        wp = PPSub.land_wps[0]
-        if len(wp) > 0:
-            x = self.lon_to_pix(wp[1])
-            y = self.lat_to_pix(wp[0])
-            if x >= 0 and x <= self.GMP.width and y >= 0 and y <= self.GMP.height:
-                painter.drawEllipse(x - 5, y - 5, 10, 10)
-        # Draw second waypoint
-        painter.setPen(QPen(QBrush(Qt.cyan), 3.0, Qt.SolidLine, Qt.RoundCap))
-        wp = PPSub.land_wps[1]
-        if len(wp) > 0:
-            x = self.lon_to_pix(wp[1])
-            y = self.lat_to_pix(wp[0])
-            if x >= 0 and x <= self.GMP.width and y >= 0 and y <= self.GMP.height:
-                painter.drawEllipse(x - 5, y - 5, 10, 10)
+    # def draw_waypoints(self, painter):
+    #    # Draw first waypoint
+    #    print("Drawing waypoints")
+    #    print(len(WaypointSub.waypoints))
+    #    painter.setPen(QPen(QBrush(Qt.blue), 3.0, Qt.SolidLine, Qt.RoundCap))
+    #    wp = PPSub.land_wps[0]
+    #    if len(wp) > 0:
+    #        x = self.lon_to_pix(wp[1])
+    #        y = self.lat_to_pix(wp[0])
+    #        if x >= 0 and x <= self.GMP.width and y >= 0 and y <= self.GMP.height:
+    #            painter.drawEllipse(x - 5, y - 5, 10, 10)
+    #    # Draw second waypoint
+    #    painter.setPen(QPen(QBrush(Qt.cyan), 3.0, Qt.SolidLine, Qt.RoundCap))
+    #    wp = PPSub.land_wps[1]
+    #    if len(wp) > 0:
+    #        x = self.lon_to_pix(wp[1])
+    #        y = self.lat_to_pix(wp[0])
+    #        if x >= 0 and x <= self.GMP.width and y >= 0 and y <= self.GMP.height:
+    #            painter.drawEllipse(x - 5, y - 5, 10, 10)
 
     def draw_path(self, painter):
         # DRAW PATH WAYPOINTS

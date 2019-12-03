@@ -265,6 +265,7 @@ class OpWindow(QWidget):
             PathSub.closeSubscriber()
 
     def handle_wpsub_checkbox(self, state_integer):
+        print("handle_wpsub_checkbox")
         checked = state_integer
         topic_name = str(self.NEDwGPS_wpsub_textedit.toPlainText())
         if checked:

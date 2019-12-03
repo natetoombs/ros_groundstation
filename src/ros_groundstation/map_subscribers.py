@@ -447,7 +447,9 @@ class WaypointSub():
 
     @staticmethod
     def waypoint_callback(wp):
+        print("Waypoint recieved")
         if InitSub.enabled:
+            print("Initsub ready")
             lat, lon, alt = InitSub.GB.ned_to_gps(wp.w[0], wp.w[1], wp.w[2])
             WaypointSub.waypoints.append(renderable_wp(lat, lon, alt, wp.chi_d, wp.chi_valid, wp.Va_d))
             for rwp in WaypointSub.waypoints:
@@ -456,6 +458,7 @@ class WaypointSub():
                     rwp.converted = True
             WaypointSub.enabled = True
         else:
+            print("InitSub not ready")
             WaypointSub.waypoints.append(
                 renderable_wp(wp.w[0], wp.w[1], wp.w[2], wp.chi_d, wp.chi_valid, wp.Va_d, False))
             WaypointSub.enabled = False
@@ -467,6 +470,7 @@ class WaypointSub():
 
     @staticmethod
     def reset():
+        print("Resetting WayPointSub")
         WaypointSub.enabled = False
         WaypointSub.waypoints = []
         if not WaypointSub.wp_sub is None:
