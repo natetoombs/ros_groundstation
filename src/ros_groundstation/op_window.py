@@ -68,6 +68,19 @@ class OpWindow(QWidget):
         pubsub_layout.addWidget(self.NEDwGPS_pathsub_textedit)
         layout.addLayout(pubsub_layout)
 
+        label = 'Extended Path Subscriber'
+        checked = rospy.get_param('extendedPathSubChecked', True)
+        topic = rospy.get_param('extendedPathSubTopic', '/extended_path')
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
+        self.extended_path_sub_checkbox = QCheckBox(QString(label))
+        self.extended_path_sub_checkbox.setChecked(checked)
+        self.extended_path_sub_checkbox.stateChanged[int].connect(self.handle_extended_path_sub_checkbox)
+        pubsub_layout.addWidget(self.extended_path_sub_checkbox)
+        self.extended_path_textedit = QTextEdit(QString(topic))
+        self.handle_extended_path_sub_checkbox(checked)
+        pubsub_layout.addWidget(self.extended_path_textedit)
+        layout.addLayout(pubsub_layout)
+
         label = 'Waypoint Subscriber'
         checked = rospy.get_param('waypointSubChecked', True)
         topic = rospy.get_param('waypointSubTopic', '/waypoint_path')
@@ -263,6 +276,14 @@ class OpWindow(QWidget):
             PathSub.updatePathTopic(topic_name)
         else:
             PathSub.closeSubscriber()
+
+    def handle_extended_path_sub_checkbox(self, state_integer):
+        checked = state_integer
+        topic_name = str(self.extended_path_textedit.toPlainText())
+        if checked:
+            ExtendedPathSub.updateExtendedPathTopic(topic_name)
+        else:
+            ExtendedPathSub.closeSubscriber()
 
     def handle_wpsub_checkbox(self, state_integer):
         print("handle_wpsub_checkbox")

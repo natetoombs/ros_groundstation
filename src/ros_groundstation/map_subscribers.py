@@ -8,7 +8,7 @@ from math import fmod, pi
 # custom messages
 from rosflight_msgs.msg import RCRaw, OutputRaw
 from inertial_sense.msg import GPS
-from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands
+from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands, Extended_Path
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
@@ -364,7 +364,7 @@ class RCSub():
             RCSub.channel = 5
 
 
-class PathSub():
+class PathSub:
     path_sub = None
     path_topic = None
     path_type = 0
@@ -416,6 +416,64 @@ class PathSub():
             PathSub.path_sub = None
 
 
+class ExtendedPathSub:
+    extended_path_sub = None
+    extended_path_topic = None
+    path_type = 0
+    r = [0.0, 0.0, 0.0]
+    q = [0.0, 0.0, 0.0]
+    c = [0.0, 0.0, 0.0]
+    line_end = [0.0, 0.0, 0.0]
+    rho = 0.0
+    enabled = False
+
+    @staticmethod
+    def updateExtendedPathTopic(new_extended_path_topic):
+        print('subscribing to', new_extended_path_topic)
+        ExtendedPathSub.reset()
+        ExtendedPathSub.extended_path_topic = new_extended_path_topic
+        if ExtendedPathSub.extended_path_topic is not None:
+            ExtendedPathSub.extended_path_sub = rospy.Subscriber(ExtendedPathSub.extended_path_topic,
+                                                                 Extended_Path,
+                                                                 ExtendedPathSub.extended_path_callback)
+
+    @staticmethod
+    def getExtendedExtendedPathTopic():
+        return ExtendedPathSub.extended_path_topic
+
+    @staticmethod
+    def extended_path_callback(extended_path):
+        if InitSub.enabled:
+            ExtendedPathSub.path_type = extended_path.path_type
+            r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.r[0], extended_path.r[1], extended_path.r[2])
+            ExtendedPathSub.r = [r_lat, r_lon, r_alt]
+            end_lat, end_lon, end_alt = InitSub.GB.ned_to_gps(extended_path.line_end[0], extended_path.line_end[1],
+                                                              extended_path.line_end[2])
+            ExtendedPathSub.line_end = [end_lat, end_lon, end_alt]
+            ExtendedPathSub.q = [extended_path.q[0], extended_path.q[1], extended_path.q[2]]
+            c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.c[0], extended_path.c[1], extended_path.c[2])
+            ExtendedPathSub.c = [c_lat, c_lon, c_alt]
+            ExtendedPathSub.rho = extended_path.rho
+            ExtendedPathSub.enabled = True
+
+    @staticmethod
+    def closeSubscriber():
+        print('closing subscriber')
+        ExtendedPathSub.reset()
+
+    @staticmethod
+    def reset():
+        ExtendedPathSub.enabled = False
+        ExtendedPathSub.extended_path_type = 0
+        ExtendedPathSub.r = [0.0, 0.0, 0.0]
+        ExtendedPathSub.q = [0.0, 0.0, 0.0]
+        ExtendedPathSub.c = [0.0, 0.0, 0.0]
+        ExtendedPathSub.rho = 0.0
+        if not ExtendedPathSub.extended_path_sub is None:
+            ExtendedPathSub.extended_path_sub.unregister()
+            ExtendedPathSub.extended_path_sub = None
+
+
 class renderable_wp():
     def __init__(self, lat, lon, alt, chi_d, chi_valid, Va_d, converted=True):
         self.lat = lat
@@ -448,6 +506,10 @@ class WaypointSub():
     @staticmethod
     def waypoint_callback(wp):
         print("Waypoint recieved")
+        if wp.clear_wp_list or wp.set_current:
+            WaypointSub.waypoints = list()
+            if wp.clear_wp_list:
+                return
         if InitSub.enabled:
             print("Initsub ready")
             lat, lon, alt = InitSub.GB.ned_to_gps(wp.w[0], wp.w[1], wp.w[2])
@@ -671,7 +733,8 @@ class OutputRawSub():
         OutputRawSub.reset()
         OutputRawSub.output_raw_topic = new_output_raw_topic
         if not OutputRawSub.output_raw_topic is None:
-            OutputRawSub.output_raw_sub = rospy.Subscriber(OutputRawSub.output_raw_topic, OutputRaw, OutputRawSub.output_raw_callback)
+            OutputRawSub.output_raw_sub = rospy.Subscriber(OutputRawSub.output_raw_topic, OutputRaw,
+                                                           OutputRawSub.output_raw_callback)
 
     @staticmethod
     def getOutputRawTopic():

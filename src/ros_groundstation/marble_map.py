@@ -200,6 +200,8 @@ class MarbleMap(QWidget):
             self.draw_waypoints(painter)
         if PathSub.enabled:
             self.draw_currentpath(painter)
+        if ExtendedPathSub.enabled:
+            self.draw_extended_path(painter)
         if MissionSub.enabled:
             self.draw_obstacles(painter)
             self.draw_boundaries(painter)
@@ -385,6 +387,22 @@ class MarbleMap(QWidget):
         else:
             c = PathSub.c  # [lat, lon]
             R = PathSub.rho  # meters
+            pt_c = [self.lon_to_pix(c[1]), self.lat_to_pix(c[0])]
+            if pt_c[0] >= 0 and pt_c[0] <= self.GMP.width and pt_c[1] >= 0 and pt_c[1] <= self.GMP.height:
+                R_pix = R * 2 ** self.GMP.zoom / (156543.03392 * cos(radians(c[0])))
+                painter.drawEllipse(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix)
+
+    def draw_extended_path(self, painter):
+        painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
+        if ExtendedPathSub.path_type == 1:  # line path
+            r = ExtendedPathSub.r  # [lat, lon]
+            line_end = ExtendedPathSub.line_end
+            pt_1 = [self.lon_to_pix(r[1]), self.lat_to_pix(r[0])]
+            pt_2 = [self.lon_to_pix(line_end[0]), self.lat_to_pix(line_end[1])]
+            painter.drawLine(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
+        else:
+            c = ExtendedPathSub.c  # [lat, lon]
+            R = ExtendedPathSub.rho  # meters
             pt_c = [self.lon_to_pix(c[1]), self.lat_to_pix(c[0])]
             if pt_c[0] >= 0 and pt_c[0] <= self.GMP.width and pt_c[1] >= 0 and pt_c[1] <= self.GMP.height:
                 R_pix = R * 2 ** self.GMP.zoom / (156543.03392 * cos(radians(c[0])))
