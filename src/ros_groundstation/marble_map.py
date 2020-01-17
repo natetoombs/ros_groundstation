@@ -446,6 +446,14 @@ class MarbleMap(QWidget):
             painter.drawLine(pt_3_x, pt_3_y, pt_5_x, pt_5_y)
             painter.drawLine(pt_6_x, pt_6_y, pt_7_x, pt_7_y)
 
+            if ConComSub.enabled:
+                heading_c = ConComSub.chi_c
+                heading_length = self.plane_w
+                painter.setPen(QPen(QBrush(Qt.yellow), 2, Qt.SolidLine, Qt.RoundCap))
+                heading_x = x + heading_length * sin(heading_c)
+                heading_y = y - heading_length * cos(heading_c)
+                painter.drawLine(x, y, heading_x, heading_y)
+
     def lon_to_pix(self, lon):  # assuming origin at upper left
         return GoogleMapPlotter.rel_lon_to_rel_pix(self.GMP.west, lon, self.GMP.zoom)
 
