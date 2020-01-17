@@ -4,7 +4,7 @@ stateSubTopic: /fixedwing/truth
 gpsInitSubChecked: false
 gpsInitSubTopic: /fixedwing/truth
 
-pathSubChecked: false
+pathSubChecked: true
 pathSubTopic: /fixedwing/current_path
 
 extendedPathSubChecked: true
