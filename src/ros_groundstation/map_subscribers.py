@@ -6,7 +6,7 @@ from Geo import Geobase
 from math import fmod, pi
 
 # custom messages
-from rosflight_msgs.msg import RCRaw, OutputRaw
+from rosflight_msgs.msg import RCRaw, OutputRaw, BatteryStatus
 from inertial_sense.msg import GPS
 from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands, Extended_Path
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
@@ -472,6 +472,63 @@ class ExtendedPathSub:
         if not ExtendedPathSub.extended_path_sub is None:
             ExtendedPathSub.extended_path_sub.unregister()
             ExtendedPathSub.extended_path_sub = None
+
+
+class BatterySub():
+    battery_sub = None
+    battery_topic = None
+    moving_average_count = 20
+    past_voltages = []
+    past_currents = []
+    voltage = 0
+    voltage_percent = 0
+    current = 0
+    enabled = False
+    num_cells = 4
+    battery_max_voltage = 4.2 * num_cells
+    battery_min_voltage = 3.4 * num_cells
+
+    @staticmethod
+    def updateBatteryTopic(new_battery_topic):
+        print('subscribing to ' + new_battery_topic)
+        BatterySub.reset()
+        BatterySub.battery_topic = new_battery_topic
+        if BatterySub.battery_topic is not None:
+            BatterySub.battery_sub = rospy.Subscriber(BatterySub.battery_topic, BatteryStatus,
+                                                      BatterySub.battery_callback)
+
+    @staticmethod
+    def getBatteryTopic():
+        return BatterySub.battery_topic
+
+    @staticmethod
+    def battery_callback(msg):
+        BatterySub.enabled = True
+        BatterySub.past_voltages.append(msg.voltage)
+        BatterySub.past_currents.append(msg.current)
+        while len(BatterySub.past_voltages) > BatterySub.moving_average_count:
+            BatterySub.past_voltages.pop(0)
+        while len(BatterySub.past_currents) > BatterySub.moving_average_count:
+            BatterySub.past_currents.pop(0)
+        BatterySub.voltage = sum(BatterySub.past_voltages)/ len(BatterySub.past_voltages)
+        BatterySub.current = sum(BatterySub.past_currents)/ len(BatterySub.past_currents)
+        BatterySub.voltage_percent = int((BatterySub.voltage - BatterySub.battery_min_voltage) / (
+                BatterySub.battery_max_voltage - BatterySub.battery_min_voltage) * 100)
+
+    @staticmethod
+    def closeSubscriber():
+        print("closing subsscriber")
+        BatterySub.reset()
+
+    @staticmethod
+    def reset():
+        print("Resetting Batterysub")
+        BatterySub.enabled = False
+        BatterySub.past_currents = []
+        BatterySub.past_voltages = []
+        if BatterySub.battery_sub is not None:
+            BatterySub.battery_sub.unregister()
+            BatterySub.battery_sub = None
 
 
 class renderable_wp():

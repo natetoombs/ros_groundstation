@@ -1,16 +1,19 @@
 stateSubChecked: true
-stateSubTopic: /fixedwing/state
+stateSubTopic: /fixedwing/truth
 
 gpsInitSubChecked: false
-gpsInitSubTopic: /fixedwing/state
+gpsInitSubTopic: /fixedwing/truth
 
-pathSubChecked: true
+pathSubChecked: false
 pathSubTopic: /fixedwing/current_path
+
+extendedPathSubChecked: true
+extendedPathSubTopic: /fixedwing/extended_path
 
 waypointSubChecked: true
 waypointSubTopic: /fixedwing/waypoint_path
 
-waypointPubChecked: false
+waypointPubChecked: true
 waypointPubTopic: /fixedwing/waypoint_path
 
 rcRawSubChecked: true
@@ -30,5 +33,4 @@ obstacleSubChecked: false
 obstacleSubTopic: /obstacles
 
 batterySubChecked: true
-batterySubTopic: /fixedwing/battery
-
+batterySubTopic: /battery

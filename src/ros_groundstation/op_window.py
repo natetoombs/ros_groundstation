@@ -207,6 +207,19 @@ class OpWindow(QWidget):
         pubsub_layout.addWidget(self.MD_obssub_textedit)
         layout.addLayout(pubsub_layout)
 
+        label = 'Battery'
+        checked = rospy.get_param('batterySubChecked', True)
+        topic = rospy.get_param('batterySubTopic', '/battery')
+        pubsub_layout = QBoxLayout(0)
+        self.MD_battery_sub_checkbox = QCheckBox(QString(label))
+        self.MD_battery_sub_checkbox.setChecked(checked)
+        self.MD_battery_sub_checkbox.stateChanged[int].connect(self.handle_battery_sub_checkbox)
+        pubsub_layout.addWidget(self.MD_battery_sub_checkbox)
+        self.MD_battery_sub_textedit = QTextEdit(QString(topic))
+        self.handle_battery_sub_checkbox(checked)
+        pubsub_layout.addWidget(self.MD_battery_sub_textedit)
+        layout.addLayout(pubsub_layout)
+
         self.MD_tab.setLayout(layout)
 
         self.waypoint_tab = QWidget()
@@ -325,6 +338,14 @@ class OpWindow(QWidget):
             ObstacleSub.updateObstacleTopic(topic_name)
         else:
             ObstacleSub.closeSubscriber()
+
+    def handle_battery_sub_checkbox(self, state_integer):
+        checked = state_integer
+        topic_name = str(self.MD_battery_sub_textedit.toPlainText())
+        if checked:
+            BatterySub.updateBatteryTopic(topic_name)
+        else:
+            BatterySub.closeSubscriber()
 
     def handle_rcsub_checkbox(self, state_integer):
         checked = state_integer
