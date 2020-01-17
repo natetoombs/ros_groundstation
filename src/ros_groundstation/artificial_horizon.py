@@ -1,7 +1,7 @@
 import sys, math, rospy, random
 from PyQt5 import QtCore, QtGui, QtWidgets
 from std_msgs.msg import Float32
-from map_subscribers import StateSub, GPSDataSub, BatterySub, ConComSub
+from map_subscribers import StateSub, GPSDataSub, BatterySub, ConComSub, ConInSub
 
 
 class ArtificialHorizon(QtWidgets.QWidget):
@@ -375,7 +375,7 @@ class ArtificialHorizon(QtWidgets.QWidget):
         for i in range(-9, 9):
             text = str(10 * abs(i))
             height = 0.5 - self.pitchInterval * 10 * i
-            if height > minHeight and height < maxHeight:
+            if minHeight < height < maxHeight:
                 painter.drawLine(
                     self.width * (0.4), self.height * (height),
                     self.width * (0.6), self.height * (height))
@@ -383,10 +383,22 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 painter.drawText(QtCore.QPoint(self.width * (0.4) - 22, self.height * (height) + 5), text)
 
             height = height - self.pitchInterval * 5
-            if height > minHeight and height < maxHeight:
+            if minHeight < height < maxHeight:
                 painter.drawLine(
                     self.width * (0.45), self.height * (height),
                     self.width * (0.55), self.height * (height))
+
+        if ConInSub.enabled:
+            painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
+            pitch_command = math.degrees(ConInSub.theta_c)
+            height = 0.5 - self.pitchInterval * pitch_command
+            if minHeight < height < maxHeight:
+                painter.drawLine(
+                    self.width * (0.4), self.height * (height),
+                    self.width * (0.6), self.height * (height))
+                painter.drawText(QtCore.QPoint(self.width * (0.6) + 5, self.height * (height) + 5), "<")
+                painter.drawText(QtCore.QPoint(self.width * (0.4) - 22, self.height * (height) + 5), ">")
+            painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.white), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
 
     def drawOutputIndicator(self, event, painter):
         """
