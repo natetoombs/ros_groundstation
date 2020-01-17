@@ -1,7 +1,7 @@
 import sys, math, rospy, random
 from PyQt5 import QtCore, QtGui, QtWidgets
 from std_msgs.msg import Float32
-from map_subscribers import StateSub, GPSDataSub, BatterySub
+from map_subscribers import StateSub, GPSDataSub, BatterySub, ConComSub
 
 
 class ArtificialHorizon(QtWidgets.QWidget):
@@ -216,7 +216,17 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 text = str(i)
                 painter.drawLine(x - 5, y, x, y)
                 painter.drawText(QtCore.QPoint(x - 10 - 8 * len(text), y + 5), text)
-
+        if ConComSub.enabled:
+            va_c = ConComSub.Va_c
+            va_c_y = self.height * .5 + ((self.speed - va_c) * scale * self.height)
+            triangle_h_dim = self.width * .02
+            triangle_v_dim = self.height * .01
+            triangle_right = boxWidth + triangle_h_dim
+            triangle = QtGui.QPolygonF()
+            triangle.append(QtCore.QPointF(boxWidth, va_c_y))
+            triangle.append(QtCore.QPointF(triangle_right, triangle_v_dim + va_c_y))
+            triangle.append(QtCore.QPointF(triangle_right, -triangle_v_dim + va_c_y))
+            painter.drawConvexPolygon(triangle)
         painter.setBrush(QtCore.Qt.black)
         p1 = QtCore.QPoint(0, self.height * (0.46))
         p2 = QtCore.QPoint(boxWidth * 0.9, self.height * (0.46))
@@ -413,7 +423,8 @@ class ArtificialHorizon(QtWidgets.QWidget):
             painter.fillRect(battery_rect, battery_brush)
             painter.fillRect(fill_rect, fill_brush)
             painter.setPen(QtCore.Qt.black)
-            painter.drawText(battery_rect, "{0:.2f}V".format(BatterySub.voltage), QtGui.QTextOption(QtCore.Qt.AlignCenter))
+            painter.drawText(battery_rect, "{0:.2f}V".format(BatterySub.voltage),
+                             QtGui.QTextOption(QtCore.Qt.AlignCenter))
 
 
 if __name__ == '__main__':
