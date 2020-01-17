@@ -219,14 +219,15 @@ class ArtificialHorizon(QtWidgets.QWidget):
         if ConComSub.enabled:
             va_c = ConComSub.Va_c
             va_c_y = self.height * .5 + ((self.speed - va_c) * scale * self.height)
-            triangle_h_dim = self.width * .02
-            triangle_v_dim = self.height * .01
-            triangle_right = boxWidth + triangle_h_dim
-            triangle = QtGui.QPolygonF()
-            triangle.append(QtCore.QPointF(boxWidth, va_c_y))
-            triangle.append(QtCore.QPointF(triangle_right, triangle_v_dim + va_c_y))
-            triangle.append(QtCore.QPointF(triangle_right, -triangle_v_dim + va_c_y))
-            painter.drawConvexPolygon(triangle)
+            if (self.height - boxHeight) / 2 <= va_c_y <= (self.height + boxHeight) / 2:
+                triangle_h_dim = self.width * .02
+                triangle_v_dim = self.height * .01
+                triangle_right = boxWidth + triangle_h_dim
+                triangle = QtGui.QPolygonF()
+                triangle.append(QtCore.QPointF(boxWidth, va_c_y))
+                triangle.append(QtCore.QPointF(triangle_right, triangle_v_dim + va_c_y))
+                triangle.append(QtCore.QPointF(triangle_right, -triangle_v_dim + va_c_y))
+                painter.drawConvexPolygon(triangle)
         painter.setBrush(QtCore.Qt.black)
         p1 = QtCore.QPoint(0, self.height * (0.46))
         p2 = QtCore.QPoint(boxWidth * 0.9, self.height * (0.46))
@@ -263,6 +264,19 @@ class ArtificialHorizon(QtWidgets.QWidget):
                 painter.drawLine(x, y, x + 5, y)
                 painter.drawText(QtCore.QPoint(x + 10, y + 5), text)
 
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.yellow))
+        if ConComSub.enabled:
+            alt_c = ConComSub.h_c
+            alt_c_y = self.height * .5 + ((self.altitude - alt_c) * scale * self.height)
+            if (self.height - boxHeight) / 2 <= alt_c_y <= (self.height + boxHeight) / 2:
+                triangle_h_dim = self.width * .02
+                triangle_v_dim = self.height * .01
+                triangle_left = self.width - boxWidth - triangle_h_dim
+                triangle = QtGui.QPolygonF()
+                triangle.append(QtCore.QPointF(self.width - boxWidth, alt_c_y))
+                triangle.append(QtCore.QPointF(triangle_left, triangle_v_dim + alt_c_y))
+                triangle.append(QtCore.QPointF(triangle_left, -triangle_v_dim + alt_c_y))
+                painter.drawConvexPolygon(triangle)
         painter.setBrush(QtCore.Qt.black)
         p1 = QtCore.QPoint(self.width, self.height * (0.46))
         p2 = QtCore.QPoint(self.width - boxWidth * 0.9, self.height * (0.46))
