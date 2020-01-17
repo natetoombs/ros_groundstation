@@ -8,7 +8,7 @@ from math import fmod, pi
 # custom messages
 from rosflight_msgs.msg import RCRaw, OutputRaw, BatteryStatus
 from inertial_sense.msg import GPS
-from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands, Extended_Path
+from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
@@ -432,10 +432,10 @@ class ExtendedPathSub:
         print('subscribing to', new_extended_path_topic)
         ExtendedPathSub.reset()
         ExtendedPathSub.extended_path_topic = new_extended_path_topic
-        if ExtendedPathSub.extended_path_topic is not None:
-            ExtendedPathSub.extended_path_sub = rospy.Subscriber(ExtendedPathSub.extended_path_topic,
-                                                                 Extended_Path,
-                                                                 ExtendedPathSub.extended_path_callback)
+        # if ExtendedPathSub.extended_path_topic is not None:
+        #     ExtendedPathSub.extended_path_sub = rospy.Subscriber(ExtendedPathSub.extended_path_topic,
+        #                                                          Extended_Path,
+        #                                                          ExtendedPathSub.extended_path_callback)
 
     @staticmethod
     def getExtendedExtendedPathTopic():
