@@ -198,10 +198,10 @@ class MarbleMap(QWidget):
         painter.drawLine(self.GMP.width / 2 - 8, self.GMP.height / 2, self.GMP.width / 2 + 8, self.GMP.height / 2)
         if WaypointSub.enabled:
             self.draw_waypoints(painter)
-        if PathSub.enabled:
-            self.draw_currentpath(painter)
         if ExtendedPathSub.enabled:
             self.draw_extended_path(painter)
+        elif PathSub.enabled:
+            self.draw_currentpath(painter)
         if MissionSub.enabled:
             self.draw_obstacles(painter)
             self.draw_boundaries(painter)
@@ -398,7 +398,7 @@ class MarbleMap(QWidget):
             r = ExtendedPathSub.r  # [lat, lon]
             line_end = ExtendedPathSub.line_end
             pt_1 = [self.lon_to_pix(r[1]), self.lat_to_pix(r[0])]
-            pt_2 = [self.lon_to_pix(line_end[0]), self.lat_to_pix(line_end[1])]
+            pt_2 = [self.lon_to_pix(line_end[1]), self.lat_to_pix(line_end[0])]
             painter.drawLine(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         else:
             c = ExtendedPathSub.c  # [lat, lon]

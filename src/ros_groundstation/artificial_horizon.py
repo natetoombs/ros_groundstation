@@ -110,6 +110,7 @@ class ArtificialHorizon(QtWidgets.QWidget):
         self.drawTurnIndicator(event, painter)
 
         painter.translate(self.width / 2, self.height / 2)
+
         painter.rotate(self.roll)
         painter.translate(-self.width / 2, -self.height / 2)
 
@@ -389,7 +390,7 @@ class ArtificialHorizon(QtWidgets.QWidget):
                     self.width * (0.55), self.height * (height))
 
         if ConInSub.enabled:
-            painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 2, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
+            painter.setPen(QtGui.QPen(QtGui.QBrush(QtCore.Qt.yellow), 4, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap))
             pitch_command = math.degrees(ConInSub.theta_c)
             height = 0.5 - self.pitchInterval * pitch_command
             if minHeight < height < maxHeight:

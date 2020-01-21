@@ -8,7 +8,7 @@ from math import fmod, pi
 # custom messages
 from rosflight_msgs.msg import RCRaw, OutputRaw, BatteryStatus
 from inertial_sense.msg import GPS
-from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands
+from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands, Extended_Path
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
@@ -425,6 +425,8 @@ class ExtendedPathSub:
     c = [0.0, 0.0, 0.0]
     line_end = [0.0, 0.0, 0.0]
     rho = 0.0
+    orbit_start = 0
+    orbit_end = 0
     enabled = False
 
     @staticmethod
@@ -432,10 +434,10 @@ class ExtendedPathSub:
         print('subscribing to', new_extended_path_topic)
         ExtendedPathSub.reset()
         ExtendedPathSub.extended_path_topic = new_extended_path_topic
-        # if ExtendedPathSub.extended_path_topic is not None:
-        #     ExtendedPathSub.extended_path_sub = rospy.Subscriber(ExtendedPathSub.extended_path_topic,
-        #                                                          Extended_Path,
-        #                                                          ExtendedPathSub.extended_path_callback)
+        if ExtendedPathSub.extended_path_topic is not None:
+            ExtendedPathSub.extended_path_sub = rospy.Subscriber(ExtendedPathSub.extended_path_topic,
+                                                                 Extended_Path,
+                                                                 ExtendedPathSub.extended_path_callback)
 
     @staticmethod
     def getExtendedExtendedPathTopic():
@@ -444,16 +446,18 @@ class ExtendedPathSub:
     @staticmethod
     def extended_path_callback(extended_path):
         if InitSub.enabled:
-            ExtendedPathSub.path_type = extended_path.path_type
-            r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.r[0], extended_path.r[1], extended_path.r[2])
+            ExtendedPathSub.path_type = extended_path.path.path_type
+            r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.path.r[0], extended_path.path.r[1], extended_path.path.r[2])
             ExtendedPathSub.r = [r_lat, r_lon, r_alt]
             end_lat, end_lon, end_alt = InitSub.GB.ned_to_gps(extended_path.line_end[0], extended_path.line_end[1],
                                                               extended_path.line_end[2])
             ExtendedPathSub.line_end = [end_lat, end_lon, end_alt]
-            ExtendedPathSub.q = [extended_path.q[0], extended_path.q[1], extended_path.q[2]]
-            c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.c[0], extended_path.c[1], extended_path.c[2])
+            ExtendedPathSub.q = [extended_path.path.q[0], extended_path.path.q[1], extended_path.path.q[2]]
+            c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.path.c[0], extended_path.path.c[1], extended_path.path.c[2])
             ExtendedPathSub.c = [c_lat, c_lon, c_alt]
-            ExtendedPathSub.rho = extended_path.rho
+            ExtendedPathSub.rho = extended_path.path.rho
+            ExtendedPathSub.orbit_start = extended_path.orbit_start
+            ExtendedPathSub.orbit_end = extended_path.orbit_end
             ExtendedPathSub.enabled = True
 
     @staticmethod
