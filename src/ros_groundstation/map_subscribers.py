@@ -427,6 +427,7 @@ class ExtendedPathSub:
     rho = 0.0
     orbit_start = 0
     orbit_end = 0
+    clockwise = False
     enabled = False
 
     @staticmethod
@@ -447,17 +448,20 @@ class ExtendedPathSub:
     def extended_path_callback(extended_path):
         if InitSub.enabled:
             ExtendedPathSub.path_type = extended_path.path.path_type
-            r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.path.r[0], extended_path.path.r[1], extended_path.path.r[2])
+            r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.path.r[0], extended_path.path.r[1],
+                                                        extended_path.path.r[2])
             ExtendedPathSub.r = [r_lat, r_lon, r_alt]
             end_lat, end_lon, end_alt = InitSub.GB.ned_to_gps(extended_path.line_end[0], extended_path.line_end[1],
                                                               extended_path.line_end[2])
             ExtendedPathSub.line_end = [end_lat, end_lon, end_alt]
             ExtendedPathSub.q = [extended_path.path.q[0], extended_path.path.q[1], extended_path.path.q[2]]
-            c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.path.c[0], extended_path.path.c[1], extended_path.path.c[2])
+            c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.path.c[0], extended_path.path.c[1],
+                                                        extended_path.path.c[2])
             ExtendedPathSub.c = [c_lat, c_lon, c_alt]
             ExtendedPathSub.rho = extended_path.path.rho
             ExtendedPathSub.orbit_start = extended_path.orbit_start
             ExtendedPathSub.orbit_end = extended_path.orbit_end
+            ExtendedPathSub.clockwise = (extended_path.path.lambda_ == 1)
             ExtendedPathSub.enabled = True
 
     @staticmethod
@@ -481,7 +485,7 @@ class ExtendedPathSub:
 class BatterySub():
     battery_sub = None
     battery_topic = None
-    moving_average_count = 20
+    moving_average_count = 100
     past_voltages = []
     past_currents = []
     voltage = 0
@@ -514,9 +518,9 @@ class BatterySub():
             BatterySub.past_voltages.pop(0)
         while len(BatterySub.past_currents) > BatterySub.moving_average_count:
             BatterySub.past_currents.pop(0)
-        BatterySub.voltage = sum(BatterySub.past_voltages)/ len(BatterySub.past_voltages)
-        BatterySub.current = sum(BatterySub.past_currents)/ len(BatterySub.past_currents)
-        BatterySub.voltage_percent = int((BatterySub.voltage - BatterySub.battery_min_voltage) / (
+        BatterySub.voltage = sum(BatterySub.past_voltages) / len(BatterySub.past_voltages)
+        BatterySub.current = sum(BatterySub.past_currents) / len(BatterySub.past_currents)
+        BatterySub.voltage_percent = float((BatterySub.voltage - BatterySub.battery_min_voltage) / (
                 BatterySub.battery_max_voltage - BatterySub.battery_min_voltage) * 100)
 
     @staticmethod

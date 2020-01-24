@@ -6,7 +6,7 @@ from PyQt5.QtGui import *
 
 QString = type("")
 import os.path
-from math import sin, cos, radians
+from math import sin, cos, radians, degrees
 
 import map_info_parser
 from Signals import WP_Handler  # , AttentiveHandler
@@ -404,9 +404,17 @@ class MarbleMap(QWidget):
             c = ExtendedPathSub.c  # [lat, lon]
             R = ExtendedPathSub.rho  # meters
             pt_c = [self.lon_to_pix(c[1]), self.lat_to_pix(c[0])]
-            if pt_c[0] >= 0 and pt_c[0] <= self.GMP.width and pt_c[1] >= 0 and pt_c[1] <= self.GMP.height:
+            orbit_start = degrees(ExtendedPathSub.orbit_start)
+            orbit_end = degrees(ExtendedPathSub.orbit_end)
+            orbit_start_qt = 16 * (90 - orbit_start)
+            orbit_span = orbit_end - orbit_start if ExtendedPathSub.clockwise else orbit_start - orbit_end
+            orbit_span %= 360
+            orbit_span_qt = 16 * orbit_span
+            if pt_c[0] >= 0 and pt_c[0] <= self.GMP.width and 0 <= pt_c[1] <= self.GMP.height:
                 R_pix = R * 2 ** self.GMP.zoom / (156543.03392 * cos(radians(c[0])))
-                painter.drawEllipse(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix)
+                painter.drawArc(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix, orbit_start_qt, orbit_span_qt)
+                painter.drawText(pt_c[0], pt_c[1],
+                                 str(orbit_start) + ", " + str(orbit_end))
 
     def draw_plane(self, painter):
         if RCSub.autopilotEnabled:

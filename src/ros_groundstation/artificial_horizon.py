@@ -443,14 +443,14 @@ class ArtificialHorizon(QtWidgets.QWidget):
             battery_width = self.width * .13
             battery_height = .05 * self.height
             battery_rect = QtCore.QRectF(0, .8 * self.height, battery_width, battery_height)
-            fill_rect = QtCore.QRectF(0, .8 * self.height, battery_width * BatterySub.voltage_percent / 100,
+            fill_rect = QtCore.QRectF(0, .8 * self.height, int(battery_width * BatterySub.voltage_percent / 100),
                                       battery_height)
             fill_brush = QtGui.QBrush(QtCore.Qt.green, QtCore.Qt.SolidPattern)
             battery_brush = QtGui.QBrush(QtCore.Qt.red, QtCore.Qt.SolidPattern)
             painter.fillRect(battery_rect, battery_brush)
             painter.fillRect(fill_rect, fill_brush)
             painter.setPen(QtCore.Qt.black)
-            painter.drawText(battery_rect, "{0:.2f}V".format(BatterySub.voltage),
+            painter.drawText(battery_rect, "{0:.1f}V".format(BatterySub.voltage),
                              QtGui.QTextOption(QtCore.Qt.AlignCenter))
 
 
