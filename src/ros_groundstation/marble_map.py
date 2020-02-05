@@ -13,6 +13,7 @@ from Signals import WP_Handler  # , AttentiveHandler
 from .Geo import Geobase
 from .map_subscribers import *
 from .map_publishers import *
+from rosplane_msgs.msg import Current_Path, Extended_Path, Full_Path
 
 
 class MarbleMap(QWidget):
@@ -198,7 +199,9 @@ class MarbleMap(QWidget):
         painter.drawLine(self.GMP.width / 2 - 8, self.GMP.height / 2, self.GMP.width / 2 + 8, self.GMP.height / 2)
         if WaypointSub.enabled:
             self.draw_waypoints(painter)
-        if ExtendedPathSub.enabled:
+        if FullPathSub.enabled:
+            self.draw_full_path(painter)
+        elif ExtendedPathSub.enabled:
             self.draw_extended_path(painter)
         elif PathSub.enabled:
             self.draw_currentpath(painter)
@@ -392,22 +395,30 @@ class MarbleMap(QWidget):
                 R_pix = R * 2 ** self.GMP.zoom / (156543.03392 * cos(radians(c[0])))
                 painter.drawEllipse(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix)
 
+    def draw_full_path(self, painter):
+        painter.setPen(QPen(QBrush(Qt.blue), 1.5, Qt.SolidLine, Qt.RoundCap))
+        for path in FullPathSub.current_path.paths:
+            self.draw_single_extended_path(painter, path)
+
     def draw_extended_path(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
-        if ExtendedPathSub.path_type == 1:  # line path
-            r = ExtendedPathSub.r  # [lat, lon]
-            line_end = ExtendedPathSub.line_end
+        self.draw_single_extended_path(painter, ExtendedPathSub.last_path)
+
+    def draw_single_extended_path(self, painter, path):
+        if path.path.path_type == Current_Path.LINE_PATH:  # line path
+            r = path.path.r  # [lat, lon]
+            line_end = path.line_end
             pt_1 = [self.lon_to_pix(r[1]), self.lat_to_pix(r[0])]
             pt_2 = [self.lon_to_pix(line_end[1]), self.lat_to_pix(line_end[0])]
             painter.drawLine(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         else:
-            c = ExtendedPathSub.c  # [lat, lon]
-            R = ExtendedPathSub.rho  # meters
+            c = path.path.c  # [lat, lon]
+            R = path.path.rho  # meters
             pt_c = [self.lon_to_pix(c[1]), self.lat_to_pix(c[0])]
-            orbit_start = degrees(ExtendedPathSub.orbit_start)
-            orbit_end = degrees(ExtendedPathSub.orbit_end)
+            orbit_start = degrees(path.orbit_start)
+            orbit_end = degrees(path.orbit_end)
             orbit_start_qt = 16 * (90 - orbit_start)
-            orbit_span = orbit_end - orbit_start if ExtendedPathSub.clockwise else orbit_start - orbit_end
+            orbit_span = orbit_end - orbit_start if path.path.lambda_ == Current_Path.CLOCKWISE else orbit_start - orbit_end
             orbit_span %= 360
             orbit_span_qt = 16 * orbit_span
             if pt_c[0] >= 0 and pt_c[0] <= self.GMP.width and 0 <= pt_c[1] <= self.GMP.height:

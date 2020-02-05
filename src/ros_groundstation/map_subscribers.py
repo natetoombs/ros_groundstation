@@ -430,6 +430,7 @@ class ExtendedPathSub:
     orbit_end = 0
     clockwise = False
     enabled = False
+    last_path = None
 
     @staticmethod
     def updateExtendedPathTopic(new_extended_path_topic):
@@ -447,6 +448,7 @@ class ExtendedPathSub:
 
     @staticmethod
     def extended_path_callback(extended_path):
+        ExtendedPathSub.last_path = extended_path
         if InitSub.enabled:
             ExtendedPathSub.path_type = extended_path.path.path_type
             r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.path.r[0], extended_path.path.r[1],
@@ -504,6 +506,19 @@ class FullPathSub:
     def full_path_callback(full_path):
         FullPathSub.enabled = True
         FullPathSub.current_path = full_path
+        if InitSub.enabled:
+            for path in full_path.paths:
+                path.path.r = FullPathSub.convert_ned_to_gps(path.path.r)
+                path.path.c = FullPathSub.convert_ned_to_gps(path.path.c)
+                path.line_end = FullPathSub.convert_ned_to_gps(path.line_end)
+
+    @staticmethod
+    def convert_ned_to_gps(ned):
+        if InitSub.enabled:
+            lat, lon, alt = InitSub.GB.ned_to_gps(ned[0], ned[1], ned[2])
+            return [lat, lon, alt]
+        else:
+            return None
 
     @staticmethod
     def close_subscriber():

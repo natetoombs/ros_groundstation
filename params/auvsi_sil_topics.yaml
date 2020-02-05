@@ -10,6 +10,9 @@ pathSubTopic: /fixedwing/current_path
 extendedPathSubChecked: true
 extendedPathSubTopic: /fixedwing/extended_path
 
+fullPathSubChecked: true
+fullPathSubTopic: /fixedwing/full_path
+
 waypointSubChecked: true
 waypointSubTopic: /fixedwing/waypoint_path
 
