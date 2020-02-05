@@ -8,7 +8,8 @@ from math import fmod, pi
 # custom messages
 from rosflight_msgs.msg import RCRaw, OutputRaw, BatteryStatus
 from inertial_sense.msg import GPS
-from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands, Extended_Path
+from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internals, Controller_Commands, Extended_Path, \
+    Full_Path
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
@@ -480,6 +481,41 @@ class ExtendedPathSub:
         if not ExtendedPathSub.extended_path_sub is None:
             ExtendedPathSub.extended_path_sub.unregister()
             ExtendedPathSub.extended_path_sub = None
+
+
+class FullPathSub:
+    full_path_sub = None
+    full_path_topic = None
+    current_path = None
+    enabled = False
+
+    @staticmethod
+    def update_full_path_topic(topic):
+        FullPathSub.reset()
+        full_path_topic = topic
+        if topic is not None:
+            full_path_sub = rospy.Subscriber(topic, Full_Path, FullPathSub.full_path_callback)
+
+    @staticmethod
+    def get_full_path_topic():
+        return FullPathSub.full_path_topic
+
+    @staticmethod
+    def full_path_callback(full_path):
+        FullPathSub.enabled = True
+        FullPathSub.current_path = full_path
+
+    @staticmethod
+    def close_subscriber():
+        print('Closing Full Path Sub')
+        FullPathSub.reset()
+
+    @staticmethod
+    def reset():
+        FullPathSub.enabled = False
+        if FullPathSub.full_path_sub is not None:
+            FullPathSub.full_path_sub.unregister()
+            FullPathSub.full_path_sub = None
 
 
 class BatterySub():

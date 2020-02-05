@@ -81,6 +81,8 @@ class OpWindow(QWidget):
         pubsub_layout.addWidget(self.extended_path_textedit)
         layout.addLayout(pubsub_layout)
 
+        layout.addLayout(OpWindow.make_topic_option('Full Path Subscriber', 'fullPath', '/full_path', self.handle_full_path_sub_option))
+
         label = 'Waypoint Subscriber'
         checked = rospy.get_param('waypointSubChecked', True)
         topic = rospy.get_param('waypointSubTopic', '/waypoint_path')
@@ -227,7 +229,7 @@ class OpWindow(QWidget):
         layout = QVBoxLayout()
 
         label = 'Waypoint Altitiude (m)'
-        altitude = rospy.get_param('waypointAltitude', 50.) # default arbitrarily chosen
+        altitude = rospy.get_param('waypointAltitude', 50.)  # default arbitrarily chosen
         altitude_layout = QBoxLayout(0)
         self.waypoint_altitude_label = QLabel(label)
         altitude_layout.addWidget(self.waypoint_altitude_label)
@@ -241,13 +243,13 @@ class OpWindow(QWidget):
         self.handle_altitude_spinbox()
 
         label = 'Waypoint airspeed (m/s)'
-        airspeed = rospy.get_param('waypointAirspeed',15.) # default arbitrarily chosen
+        airspeed = rospy.get_param('waypointAirspeed', 15.)  # default arbitrarily chosen
         airspeed_layout = QBoxLayout(0)
         self.waypoint_airspeed_label = QLabel(label)
         airspeed_layout.addWidget(self.waypoint_airspeed_label)
         self.waypoint_airspeed_spinbox = QDoubleSpinBox()
         self.waypoint_airspeed_spinbox.setMinimum(0)
-        self.waypoint_airspeed_spinbox.setMaximum(30) #arbitrarily chosen
+        self.waypoint_airspeed_spinbox.setMaximum(30)  # arbitrarily chosen
         self.waypoint_airspeed_spinbox.setValue(airspeed)
         airspeed_layout.addWidget(self.waypoint_airspeed_spinbox)
         layout.addLayout(airspeed_layout)
@@ -257,6 +259,29 @@ class OpWindow(QWidget):
         layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         self.waypoint_tab.setLayout(layout)
+
+    @staticmethod
+    def make_topic_option(label, name, default_value, update_fun, is_sub=True):
+        checked_param_name = name + ("Sub" if is_sub else "Pub") + "Checked"
+        checked = rospy.get_param(checked_param_name, False)
+        topic_param_name = name + ('Sub' if is_sub else 'Pub') + 'Topic'
+        topic = rospy.get_param(topic_param_name, default_value)
+        pubsub_layout = QBoxLayout(0)  # for combining the checkbox and text field
+        checkbox = QCheckBox(QString(label))
+        checkbox.setChecked(checked)
+        pubsub_layout.addWidget(checkbox)
+        text_edit = QTextEdit(QString(topic))
+        pubsub_layout.addWidget(text_edit)
+        checkbox.stateChanged[int].connect(lambda state_integer: update_fun(checkbox.isChecked(), text_edit.toPlainText()))
+        update_fun(checkbox.isChecked(), text_edit.toPlainText())
+        return pubsub_layout
+
+    def handle_full_path_sub_option(self, checked, topic):
+        rospy.logwarn('Updating Full Path option')
+        if checked:
+            FullPathSub.update_full_path_topic(topic)
+        else:
+            FullPathSub.reset()
 
     def handle_altitude_spinbox(self):
         altitude = self.waypoint_altitude_spinbox.value()
