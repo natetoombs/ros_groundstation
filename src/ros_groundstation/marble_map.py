@@ -199,12 +199,12 @@ class MarbleMap(QWidget):
         painter.drawLine(self.GMP.width / 2 - 8, self.GMP.height / 2, self.GMP.width / 2 + 8, self.GMP.height / 2)
         if WaypointSub.enabled:
             self.draw_waypoints(painter)
-        if FullPathSub.enabled:
-            self.draw_full_path(painter)
-        elif ExtendedPathSub.enabled:
+        if ExtendedPathSub.enabled:
             self.draw_extended_path(painter)
         elif PathSub.enabled:
             self.draw_currentpath(painter)
+        if FullPathSub.enabled:
+            self.draw_full_path(painter)
         if MissionSub.enabled:
             self.draw_obstacles(painter)
             self.draw_boundaries(painter)
@@ -396,7 +396,7 @@ class MarbleMap(QWidget):
                 painter.drawEllipse(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix)
 
     def draw_full_path(self, painter):
-        painter.setPen(QPen(QBrush(Qt.blue), 1.5, Qt.SolidLine, Qt.RoundCap))
+        painter.setPen(QPen(QBrush(Qt.cyan), 1.5, Qt.SolidLine, Qt.RoundCap))
         for path in FullPathSub.current_path.paths:
             self.draw_single_extended_path(painter, path)
 
@@ -405,6 +405,8 @@ class MarbleMap(QWidget):
         self.draw_single_extended_path(painter, ExtendedPathSub.last_path)
 
     def draw_single_extended_path(self, painter, path):
+        if path is None:
+            return
         if path.path.path_type == Current_Path.LINE_PATH:  # line path
             r = path.path.r  # [lat, lon]
             line_end = path.line_end
@@ -412,20 +414,22 @@ class MarbleMap(QWidget):
             pt_2 = [self.lon_to_pix(line_end[1]), self.lat_to_pix(line_end[0])]
             painter.drawLine(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         else:
-            c = path.path.c  # [lat, lon]
+            c = path.path.c  # [lat, lon, alt]
             R = path.path.rho  # meters
             pt_c = [self.lon_to_pix(c[1]), self.lat_to_pix(c[0])]
             orbit_start = degrees(path.orbit_start)
             orbit_end = degrees(path.orbit_end)
+            orbit_start += -90 if path.path.lambda_ == Current_Path.CLOCKWISE else 90
+            orbit_end += -90 if path.path.lambda_ == Current_Path.CLOCKWISE else 90
             orbit_start_qt = 16 * (90 - orbit_start)
             orbit_span = orbit_end - orbit_start if path.path.lambda_ == Current_Path.CLOCKWISE else orbit_start - orbit_end
             orbit_span %= 360
             orbit_span_qt = 16 * orbit_span
-            if pt_c[0] >= 0 and pt_c[0] <= self.GMP.width and 0 <= pt_c[1] <= self.GMP.height:
+            if path.path.lambda_ == Current_Path.CLOCKWISE:
+                orbit_span_qt *= -1
+            if 0 <= pt_c[0] <= self.GMP.width and 0 <= pt_c[1] <= self.GMP.height:
                 R_pix = R * 2 ** self.GMP.zoom / (156543.03392 * cos(radians(c[0])))
                 painter.drawArc(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix, orbit_start_qt, orbit_span_qt)
-                painter.drawText(pt_c[0], pt_c[1],
-                                 str(orbit_start) + ", " + str(orbit_end))
 
     def draw_plane(self, painter):
         if RCSub.autopilotEnabled:

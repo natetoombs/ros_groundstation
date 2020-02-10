@@ -448,24 +448,29 @@ class ExtendedPathSub:
 
     @staticmethod
     def extended_path_callback(extended_path):
-        ExtendedPathSub.last_path = extended_path
         if InitSub.enabled:
             ExtendedPathSub.path_type = extended_path.path.path_type
-            r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.path.r[0], extended_path.path.r[1],
-                                                        extended_path.path.r[2])
-            ExtendedPathSub.r = [r_lat, r_lon, r_alt]
-            end_lat, end_lon, end_alt = InitSub.GB.ned_to_gps(extended_path.line_end[0], extended_path.line_end[1],
-                                                              extended_path.line_end[2])
-            ExtendedPathSub.line_end = [end_lat, end_lon, end_alt]
             ExtendedPathSub.q = [extended_path.path.q[0], extended_path.path.q[1], extended_path.path.q[2]]
-            c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.path.c[0], extended_path.path.c[1],
-                                                        extended_path.path.c[2])
-            ExtendedPathSub.c = [c_lat, c_lon, c_alt]
             ExtendedPathSub.rho = extended_path.path.rho
             ExtendedPathSub.orbit_start = extended_path.orbit_start
             ExtendedPathSub.orbit_end = extended_path.orbit_end
             ExtendedPathSub.clockwise = (extended_path.path.lambda_ == 1)
             ExtendedPathSub.enabled = True
+            if extended_path.path.path_type == Current_Path.LINE_PATH:
+                r_lat, r_lon, r_alt = InitSub.GB.ned_to_gps(extended_path.path.r[0], extended_path.path.r[1],
+                                                            extended_path.path.r[2])
+                ExtendedPathSub.r = [r_lat, r_lon, r_alt]
+                end_lat, end_lon, end_alt = InitSub.GB.ned_to_gps(extended_path.line_end[0], extended_path.line_end[1],
+                                                                  extended_path.line_end[2])
+                ExtendedPathSub.line_end = [end_lat, end_lon, end_alt]
+                extended_path.path.r = FullPathSub.convert_ned_to_gps(extended_path.path.r)
+                extended_path.line_end = FullPathSub.convert_ned_to_gps(extended_path.line_end)
+            else:
+                c_lat, c_lon, c_alt = InitSub.GB.ned_to_gps(extended_path.path.c[0], extended_path.path.c[1],
+                                                            extended_path.path.c[2])
+                ExtendedPathSub.c = [c_lat, c_lon, c_alt]
+                extended_path.path.c = FullPathSub.convert_ned_to_gps(extended_path.path.c)
+            ExtendedPathSub.last_path = extended_path
 
     @staticmethod
     def closeSubscriber():
@@ -505,12 +510,14 @@ class FullPathSub:
     @staticmethod
     def full_path_callback(full_path):
         FullPathSub.enabled = True
-        FullPathSub.current_path = full_path
         if InitSub.enabled:
             for path in full_path.paths:
-                path.path.r = FullPathSub.convert_ned_to_gps(path.path.r)
-                path.path.c = FullPathSub.convert_ned_to_gps(path.path.c)
-                path.line_end = FullPathSub.convert_ned_to_gps(path.line_end)
+                if path.path.path_type == Current_Path.LINE_PATH:
+                    path.path.r = FullPathSub.convert_ned_to_gps(path.path.r)
+                    path.line_end = FullPathSub.convert_ned_to_gps(path.line_end)
+                else:
+                    path.path.c = FullPathSub.convert_ned_to_gps(path.path.c)
+            FullPathSub.current_path = full_path
 
     @staticmethod
     def convert_ned_to_gps(ned):
