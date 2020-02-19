@@ -397,8 +397,24 @@ class MarbleMap(QWidget):
 
     def draw_full_path(self, painter):
         painter.setPen(QPen(QBrush(Qt.cyan), 1.5, Qt.SolidLine, Qt.RoundCap))
-        for path in FullPathSub.current_path.paths:
-            self.draw_single_extended_path(painter, path)
+        if FullPathSub.current_path is not None:
+            for path in FullPathSub.current_path:
+                self.draw_single_extended_path(painter, path)
+
+    def draw_debug_text(self, painter, text, width=200):
+        """
+        Draws the provided text in the top left corner of the screen, with a gray background.
+        Uses the pen currently set on the painter. Text wraps automatically and height is automatically calculated
+        :param painter:
+        :param text:
+        :param width: Optional. The width of the text box. Text will wrap if too long.
+        :return:
+        """
+        fm = QFontMetrics(painter.font())
+        brush = QBrush(QColor(200, 200, 200, 200))
+        rect = fm.boundingRect(QRect(0, 0, width, 100000), Qt.TextWordWrap, text)
+        painter.fillRect(rect, brush)
+        painter.drawText(rect, Qt.TextWordWrap, text)
 
     def draw_extended_path(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
@@ -407,25 +423,31 @@ class MarbleMap(QWidget):
     def draw_single_extended_path(self, painter, path):
         if path is None:
             return
-        if path.path.path_type == Current_Path.LINE_PATH:  # line path
-            r = path.path.r  # [lat, lon]
+        if path.is_line:  # line path
+            r = path.r  # [lat, lon]
             line_end = path.line_end
             pt_1 = [self.lon_to_pix(r[1]), self.lat_to_pix(r[0])]
             pt_2 = [self.lon_to_pix(line_end[1]), self.lat_to_pix(line_end[0])]
             painter.drawLine(pt_1[0], pt_1[1], pt_2[0], pt_2[1])
         else:
-            c = path.path.c  # [lat, lon, alt]
-            R = path.path.rho  # meters
+            c = path.orbit_center  # [lat, lon, alt]
+            R = path.radius  # meters
             pt_c = [self.lon_to_pix(c[1]), self.lat_to_pix(c[0])]
             orbit_start = degrees(path.orbit_start)
             orbit_end = degrees(path.orbit_end)
-            orbit_start += -90 if path.path.lambda_ == Current_Path.CLOCKWISE else 90
-            orbit_end += -90 if path.path.lambda_ == Current_Path.CLOCKWISE else 90
+            orbit_start += -90 if path.clockwise else 90
+            orbit_end += -90 if path.clockwise else 90
             orbit_start_qt = 16 * (90 - orbit_start)
-            orbit_span = orbit_end - orbit_start if path.path.lambda_ == Current_Path.CLOCKWISE else orbit_start - orbit_end
+            orbit_span = orbit_end - orbit_start if path.clockwise else orbit_start - orbit_end
             orbit_span %= 360
-            orbit_span_qt = 16 * orbit_span
-            if path.path.lambda_ == Current_Path.CLOCKWISE:
+            orbit_span_qt = int(16 * orbit_span)
+            debug_text = ("orbit_start: {}\n"
+                          "orbit_end: {}\n"
+                          "orbit_start_qt: {}\n"
+                          "orbit_span_qt: {}\n"
+                          ).format(orbit_start, orbit_end, orbit_start_qt, orbit_span_qt)
+            #self.draw_debug_text(painter, debug_text)
+            if path.clockwise:
                 orbit_span_qt *= -1
             if 0 <= pt_c[0] <= self.GMP.width and 0 <= pt_c[1] <= self.GMP.height:
                 R_pix = R * 2 ** self.GMP.zoom / (156543.03392 * cos(radians(c[0])))
@@ -476,6 +498,11 @@ class MarbleMap(QWidget):
                 heading_x = x + heading_length * sin(heading_c)
                 heading_y = y - heading_length * cos(heading_c)
                 painter.drawLine(x, y, heading_x, heading_y)
+
+    def point_to_pix(self, p):  # p is [lat, lon]
+        lat = p[0]
+        lon = p[1]
+        return self.lon_to_pix(lon), self.lat_to_pix(lon)
 
     def lon_to_pix(self, lon):  # assuming origin at upper left
         return GoogleMapPlotter.rel_lon_to_rel_pix(self.GMP.west, lon, self.GMP.zoom)

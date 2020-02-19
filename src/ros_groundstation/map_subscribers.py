@@ -14,6 +14,8 @@ from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
 
+from Path import Path
+
 
 class InitSub():
     init_latlonalt = [0.0, 0.0, 0.0]
@@ -449,6 +451,7 @@ class ExtendedPathSub:
     @staticmethod
     def extended_path_callback(extended_path):
         if InitSub.enabled:
+            ExtendedPathSub.last_path = Path(extended_path)
             ExtendedPathSub.path_type = extended_path.path.path_type
             ExtendedPathSub.q = [extended_path.path.q[0], extended_path.path.q[1], extended_path.path.q[2]]
             ExtendedPathSub.rho = extended_path.path.rho
@@ -470,7 +473,6 @@ class ExtendedPathSub:
                                                             extended_path.path.c[2])
                 ExtendedPathSub.c = [c_lat, c_lon, c_alt]
                 extended_path.path.c = FullPathSub.convert_ned_to_gps(extended_path.path.c)
-            ExtendedPathSub.last_path = extended_path
 
     @staticmethod
     def closeSubscriber():
@@ -499,9 +501,9 @@ class FullPathSub:
     @staticmethod
     def update_full_path_topic(topic):
         FullPathSub.reset()
-        full_path_topic = topic
+        FullPathSub.full_path_topic = topic
         if topic is not None:
-            full_path_sub = rospy.Subscriber(topic, Full_Path, FullPathSub.full_path_callback)
+            FullPathSub.full_path_sub = rospy.Subscriber(topic, Full_Path, FullPathSub.full_path_callback)
 
     @staticmethod
     def get_full_path_topic():
@@ -511,13 +513,7 @@ class FullPathSub:
     def full_path_callback(full_path):
         FullPathSub.enabled = True
         if InitSub.enabled:
-            for path in full_path.paths:
-                if path.path.path_type == Current_Path.LINE_PATH:
-                    path.path.r = FullPathSub.convert_ned_to_gps(path.path.r)
-                    path.line_end = FullPathSub.convert_ned_to_gps(path.line_end)
-                else:
-                    path.path.c = FullPathSub.convert_ned_to_gps(path.path.c)
-            FullPathSub.current_path = full_path
+            FullPathSub.current_path = [Path(path) for path in full_path.paths]
 
     @staticmethod
     def convert_ned_to_gps(ned):
