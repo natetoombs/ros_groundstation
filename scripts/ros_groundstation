@@ -4,7 +4,9 @@ import sys
 
 from ros_groundstation.gs_plugin import GroundStationPlugin
 from rqt_gui.main import Main
+import faulthandler
 
 plugin = 'ros_groundstation'
+faulthandler.enable()
 main = Main(filename=plugin)
 sys.exit(main.main(standalone=plugin))

@@ -101,7 +101,7 @@ class GoogleMapPlotter():
         if self.mapname == self.blankname:
             self.blank_update()
         else:
-            self.mz_obj = self.mz_objs[self.mapname][self.zoom]
+            self.mz_obj = self.mz_objs[self.mapname][self.zoom  ]
             self.fetch()
             self.update()
 
