@@ -13,6 +13,7 @@ from rosplane_msgs.msg import Current_Path, Waypoint, State, Controller_Internal
 from uav_msgs.msg import JudgeMission, NED_list, NED_pt, Point, OrderedPoint
 from uav_msgs.msg import Waypoint as UAVWaypoint
 from uav_msgs.srv import GetMissionWithId, PlanMissionPoints, UploadPath
+from rosflight_msgs.msg import GNSS, RCRaw
 
 from Path import Path
 
@@ -731,7 +732,7 @@ class GPSDataSub():
         GPSDataSub.reset()
         GPSDataSub.gps_data_topic = new_gps_data_topic
         if not GPSDataSub.gps_data_topic is None:
-            GPSDataSub.gps_sub = rospy.Subscriber(GPSDataSub.gps_data_topic, GPS, GPSDataSub.callback_GPS)
+            GPSDataSub.gps_sub = rospy.Subscriber(GPSDataSub.gps_data_topic, GNSS, GPSDataSub.callback_GPS)
 
     @staticmethod
     def getGPSDataTopic():
