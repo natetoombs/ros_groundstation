@@ -55,7 +55,7 @@ class MarbleMap(QWidget):
         menu = QMenu(self)
         waypoint_action = menu.addAction("Add Waypoint")
         replace_action = menu.addAction("Replace all waypoints")
-        land_action = menu.addAction("Land here (TODO)")
+        land_action = menu.addAction("Land here")
         clear_action = menu.addAction("Clear all waypoints")
         choice = menu.exec_(self.mapToGlobal(point))
         clickX = point.x()
@@ -70,7 +70,7 @@ class MarbleMap(QWidget):
         elif choice == clear_action:
             self.clear_waypoints()
         elif choice == land_action:
-            pass  # TODO
+	    self.add_land_waypoint([n,e,0])
 
     def add_waypoint(self, n, e, d):
         PPPub.publishWaypointShort(n, e)
@@ -82,7 +82,7 @@ class MarbleMap(QWidget):
         PPPub.clearWaypoints()
 
     def add_land_waypoint(self, point):
-        pass
+    	PPPub.publishWaypoint(point, 0)
 
     def activateAttentive(self, idx):
         self.attentiveIDX = idx
