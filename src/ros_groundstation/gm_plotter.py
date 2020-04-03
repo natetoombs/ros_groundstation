@@ -156,7 +156,8 @@ class GoogleMapPlotter():
     def paste(self, big_image, small_image, upper_left_x, upper_left_y):
         destPos = QPoint(upper_left_x, upper_left_y)
         painter = QPainter(big_image)
-        painter.drawImage(destPos, small_image)
+	if small_image is not None:
+		painter.drawImage(destPos, small_image)
 
     def grab_tile(self, i, j):
         filename = os.path.join(_MAPS_CACHE_PATH, self.mapname, str(self.zoom), '%d_%d.jpg' % (i, j))

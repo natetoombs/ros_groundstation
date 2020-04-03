@@ -396,9 +396,10 @@ class MarbleMap(QWidget):
                 painter.drawEllipse(pt_c[0] - R_pix, pt_c[1] - R_pix, 2 * R_pix, 2 * R_pix)
 
     def draw_full_path(self, painter):
-        painter.setPen(QPen(QBrush(Qt.cyan), 1.5, Qt.SolidLine, Qt.RoundCap))
-        if FullPathSub.current_path is not None:
-            for path in FullPathSub.current_path:
+        if FullPathSub.current_path is not None and len(FullPathSub.current_path)>0:
+	    color_separation = 360/len(FullPathSub.current_path)
+            for index, path in enumerate(FullPathSub.current_path):
+                painter.setPen(QPen(QBrush(QColor.fromHsv(color_separation * index, 255, 255)),2.0, Qt.DashDotLine, Qt.RoundCap))
                 self.draw_single_extended_path(painter, path)
 
     def draw_debug_text(self, painter, text, width=200):
