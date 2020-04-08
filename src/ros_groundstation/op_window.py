@@ -21,6 +21,8 @@ class OpWindow(QWidget):
         loadUi(ui_file, self)
         self.setObjectName(uifname)
 
+        self.tabs = {}
+
         # Parse NED_with_GPS_defaults ==================================================
         self.NEDwGPS_tab = QWidget()
         self.tab_widget.addTab(self.NEDwGPS_tab, QString('Principle Subscibers and Publishers'))
@@ -275,6 +277,29 @@ class OpWindow(QWidget):
         checkbox.stateChanged[int].connect(lambda state_integer: update_fun(checkbox.isChecked(), text_edit.toPlainText()))
         update_fun(checkbox.isChecked(), text_edit.toPlainText())
         return pubsub_layout
+
+    def add_tab(self, name):
+        tab = QWidget()
+        layout = QVBoxLayout()
+        tab.setLayout(layout)
+        self.tabs[name] = layout
+        self.tab_widget.addTab(tab, QString(name))
+    
+    def add_text_check(self, tab_name, label, update_fun, checked=False, default_text=''): # TODO add support for defaults
+        if not label in self.tabs:
+            self.add_tab(tab_name)
+        tab = self.tabs[tab_name]
+        layout = QBoxLayout(0)
+        checkbox = QCheckBox(QString(label))
+        checkbox.setChecked(checked)
+        layout.addWidget(checkbox)
+        text_edit = QTextEdit(QString(default_text))
+        layout.addWidget(text_edit)
+        checkbox.stateChanged[int].connect(lambda state_integer: update_fun(checkbox.isChecked(), text_edit.toPlainText()))
+        text_edit.textChanged.connect(lambda: update_fun(checkbox.isChecked(), text_edit.toPlainText()))
+        update_fun(checkbox.isChecked(), text_edit.toPlainText())
+        tab.addLayout(layout)
+
 
     def handle_full_path_sub_option(self, checked, topic):
         rospy.logwarn('Updating Full Path option')

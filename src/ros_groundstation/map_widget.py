@@ -38,6 +38,9 @@ class MapWindow(QWidget):
         self.init_op_window()
         self._recenter.clicked.connect(self._marble_map.recenter)
         self._get_mission.clicked.connect(self._marble_map.get_mission)
+    
+    def add_extension_painter(self, painter):
+        self._marble_map.add_extension_painter(painter)
 
     def init_ct_window(self):
         self.ctWindow = CtWindow(self._marble_map)
@@ -67,3 +70,6 @@ class MapWindow(QWidget):
 
     def restore_settings(self, plugin_settings, instance_settings):
         pass
+
+    def add_text_check_option(self, tab, label, update_fun, checked=False, default_text=''):
+        self.opWindow.add_text_check(tab, label, update_fun, checked, default_text)

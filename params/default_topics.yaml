@@ -7,17 +7,23 @@ gpsInitSubTopic: gps
 pathSubChecked: true
 pathSubTopic: current_path
 
-waypointSubChecked: false
+extendedPathSubChecked: true
+extendedPathSubTopic: extended_path
+
+fullPathSubChecked: true
+fullPathSubTopic: full_path
+
+waypointSubChecked: true
 waypointSubTopic: waypoint_path
 
-waypointPubChecked: false
+waypointPubChecked: true
 waypointPubTopic: waypoint_path
 
 rcRawSubChecked: true
 rcRawSubTopic: rc_raw
 rcRawChannel: 6
 
-gpsDataSubChecked: true
+gpsDataSubChecked: false
 gpsDataSubTopic: gps
 
 controllerInternalsSubChecked: true

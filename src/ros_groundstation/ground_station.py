@@ -1,5 +1,7 @@
 from __future__ import print_function
+import imp, os
 import argparse
+import rospy, rospkg
 from python_qt_binding import QT_BINDING
 from python_qt_binding.QtCore import qDebug, QTimer, Qt
 from python_qt_binding.QtWidgets import QWidget, QBoxLayout, QVBoxLayout, QHBoxLayout, QPushButton, QSplitter
@@ -15,7 +17,6 @@ class GroundStationWidget(QWidget):
     def __init__(self):
         super(GroundStationWidget, self).__init__()
 
-        self._principle_layout = QBoxLayout(0) # main layout is horizontal (0)
         self._principle_layout = QSplitter(Qt.Horizontal)
         self._map_layout = QVBoxLayout()
         map_widget = QWidget()
@@ -50,6 +51,9 @@ class GroundStationWidget(QWidget):
         total_layout.addWidget(self._principle_layout)
         self.setLayout(total_layout)
 
+        self._extensions = []
+        self._load_extensions()
+
         # Global timer for marble_map and artificial_horizon
         self.interval = 100     # in milliseconds, period of regular update
         self.timer = QTimer(self)
@@ -66,3 +70,19 @@ class GroundStationWidget(QWidget):
 
     def restore_settings(self, plugin_settings, instance_settings):
         print('fake restore')
+    
+    def _load_extensions(self):
+        plugin_dir = rospkg.RosPack().get_path('ros_groundstation')+'/src/ros_groundstation/extensions'
+        for ext_location in os.listdir(plugin_dir):
+            ext_location = os.path.join(plugin_dir, ext_location)
+            if os.path.isfile(ext_location) and ext_location[-3:]=='.py':
+                rospy.logwarn(ext_location)
+                ext = imp.load_source('extension', ext_location)
+                if 'init_extension' in dir(ext):
+                    self._extensions.append(ext)
+        for ext in self._extensions:
+            ext.init_extension(self)
+    def add_map_painter(self, painter):
+        self._mw.add_extension_painter(painter)
+    def add_text_check_option(self, tab, label, update_fun, checked=False, default_text=''):
+        self._mw.add_text_check_option(tab, label, update_fun, checked, default_text)
