@@ -70,6 +70,7 @@ include_directories(
 ## in contrast to setup.py, you can choose the destination
 install(PROGRAMS
   scripts/ros_groundstation
+  scripts/service_client
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

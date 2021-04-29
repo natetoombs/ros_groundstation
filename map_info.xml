@@ -1,4 +1,4 @@
-<maps default="Rock Canyon Park">
+<maps default="Brigham Young University">
 	<!--
     <map name="Map Name For Menu">
         <lat>Latitude Float (N+, S-)</lat>
@@ -6,15 +6,22 @@
         <zoom>How Much Map Zooms (int)</zoom>
     </map>
     -->
-	<map name="Brigham Young University">
+    <map name="Brigham Young University">
 		<lat>40.2518</lat>
 		<lon>-111.6493</lon>
 		<zoom>18</zoom>
 		<radius_m>1000</radius_m>
 	</map>
-	<!--<map name="Elberta">
-		<lat>39.9764</lat>
-		<lon>-111.9582</lon>
+	<map name="Eglin AFB">
+		<lat>30.4658</lat>
+		<lon>-86.5506</lon>
+		<zoom>18</zoom>
+		<radius_m>1000</radius_m>
+	</map>
+	<!--
+	<map name="Elberta">
+		<lat>39.982930</lat>
+		<lon>-111.989435</lon>
 		<zoom>18</zoom>
 		<radius_m>1000</radius_m>
 	</map>
@@ -35,11 +42,13 @@
 		<lon>-111.9019</lon>
 		<zoom>18</zoom>
 		<radius_m>1000</radius_m>
-	</map>-->
+	</map>
 	<map name="Rock Canyon Park">
 		<lat>40.2678966681</lat>
 		<lon>-111.634524573</lon>
 		<zoom>18</zoom>
 		<radius_m>1000</radius_m>
 	</map>
+	-->
+
 </maps>
